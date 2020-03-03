@@ -1,12 +1,12 @@
 //Note:The template file will be copied to a new file. When you change the code of the template file you can create new file with this base code. 
-#include <iostream> 
-using namespace std;
+//#include <iostream> 
+//using namespace std;
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
 
-int version 1;		// Starting Version - 2 March 2020
+int version = 1;		// Starting Version - 2 March 2020
 
 enum e_item {
 	e_food,
@@ -54,11 +54,28 @@ char smallA [][20] = {
 	"None" 
 };
 
+///////////////////////////////////////
 char *whatName (enum e_item what){
 	return smallA [(int) what];
 }//whatName
 
 int prevSelected [20];
+
+
+///////////////////////////////////////
+void sort (int array [], int max) {
+	int i, j;
+	int hold;
+	for (i=0; i<max; i++)
+		for (j=0; j<max; j++) {
+			if (array [i] > array [j]) {
+				hold = array [i];
+				array [i] = array [j];
+				array [j] = hold;
+			}//if 
+		}//forj
+
+}//sort
 
 ///////////////////////////////////////
 void selectTrade (struct trade *it, float volitility){
@@ -353,6 +370,61 @@ void doTrade (int cnt, struct trade *list) {
 }//dolarge
 
 
+
+int attack (int youDice, int themDice)
+{
+	int	themA [50];
+	int	youA [50];
+	int	i;
+	int	score = 0;
+
+	// reset arrays to 0
+   for (i=0; i<youDice; i++) {
+		youA [i] = 0;
+		themA [i] = 0;
+	}//for
+
+	// Figure out dice
+	printf ("Your dice : ");
+   for (i=0; i<youDice; i++)
+		youA [i] = rand()%6+1;
+	sort (youA, youDice);
+   for (i=0; i<youDice; i++)
+        printf ("%d    ", youA [i]);
+        
+   printf ("\nTheir dice: ");
+   for (i=0; i<themDice; i++)
+		themA [i] = rand()%6+1;
+	sort (themA, themDice);
+   for (i=0; i<themDice; i++)
+       printf ("%d    ", themA[i]);
+	printf ("\n");
+	
+	// Evaluate
+	int min;
+	printf ("            ");
+	if (youDice > themDice)
+		min = themDice;
+	else
+		min = youDice;
+   for (i=0; i<min; i++) {
+		char ch;
+		ch = ' ';
+		if (youA [i] > themA[i]) {
+			ch = '+';
+			score ++;
+		}//if
+		if (youA [i] < themA[i]) {
+			ch = '-';
+			score --;
+		}//if
+      printf ("%c    ", ch);
+	}//for
+	printf ("\n");
+	return score;
+}//attack
+
+///////////////////////////////////////
 void beAttacked (int age){
     int num;
     printf ("------- Be Attacked by a neighboring clan -------\n");
@@ -373,61 +445,59 @@ void beAttacked (int age){
              break;
     }//switch
     
-    themDice += rand()%3-1;        // vary dice by one randomly
+	themDice += rand()%3-1;        // vary dice by one randomly
 
-    printf ("Your dice: ");
-    for (i=0; i<youDice; i++)
-        printf ("%d    ", rand()%6+1);
-        
-    
-    printf ("\nTheir dice: ");
-    for (i=0; i<themDice; i++)
-        printf ("%d    ", rand()%6+1);
-    printf ("\n");
-    
-    
-    printf ("-- Lose the following --\n");
-    doSack (sackNear, 10);
+	score = attack (youDice, themDice);;
+	printf ("Score:  %d\n", score);
+	if (score > 0) {
+		printf ("You win\n");
+		return;
+	}//if
+
+	printf ("-- Lose the following --\n");
+	doSack (sackNear, 10);
 }//beattacked
 
+///////////////////////////////////////
 void runRaid (int age){
-    int num;
-    printf ("------- Raid a neighboring clan -------\n");
-    printf ("Number of dice:  ");
-    scanf ("%d\n", &num);
-    
-    int i;
-    int score = 0;
-    
-    int youDice = num;
-    int themDice;
-    switch (age) {
+   int num;
+   int i;
+   int score = 0;
+   int youDice;
+   int themDice;
+
+   printf ("------- Raid a neighboring clan -------\n");
+   printf ("Number of dice:  ");
+   scanf ("%d", &num);
+   //scanf ("%d\n", &num);
+
+	youDice = num;
+   switch (age) {
         case 1: themDice = 4; 
             break;
         case 2: themDice = 6;
              break;
          case 3: themDice = 8;
              break;
-    }//switch
+   }//switch
 
-    printf ("Your dice: ");
-    for (i=0; i<youDice; i++)
-        printf ("%d    ", rand()%6+1);
-        
-    
-    printf ("\nTheir dice: ");
-    for (i=0; i<themDice; i++)
-        printf ("%d    ", rand()%6+1);
-    printf ("\n");
-    
-    printf ("-- Leader --\n");
-    doSack (sackNear, 10);
-    printf ("-- Crew --\n");            
-    doSack (sackNear, 5);
+	score = attack (youDice, themDice);;
+
+	printf ("Score: %d\n", score);
+	if (score <= 0) {
+		printf ("Fail\n");
+		return;
+	}//ifscore
+   
+   printf ("-- Leader --\n");
+   doSack (sackNear, 10);
+   printf ("-- Crew --\n");            
+   doSack (sackNear, 5);
 }//runraid
         
         
 
+///////////////////////////////////////
 void runSack (int location, int age){
     int num;
     printf ("------- Sack a village -------\n");
@@ -448,6 +518,7 @@ void runSack (int location, int age){
              break;
     }//switch
 
+/*
     printf ("Your dice: ");
     for (i=0; i<youDice; i++)
         printf ("%d    ", rand()%6+1);
@@ -457,7 +528,14 @@ void runSack (int location, int age){
     for (i=0; i<themDice; i++)
         printf ("%d    ", rand()%6+1);
     printf ("\n");
+*/
         
+	score = attack (youDice, themDice);;
+	printf ("Score: %d\n", score);
+	if (score <= 0) {
+		printf ("You fail\n");
+		return;
+	}//if
 
         switch (location){
             case 1: 
@@ -482,6 +560,7 @@ void runSack (int location, int age){
         }//switch
 }//runattack
 
+///////////////////////////////////////
 void newTerritory (int location) {
     int num;
     printf ("------- New Territory -------\n");
@@ -624,14 +703,15 @@ int main (int argc, char *argv[]){
 		printf ("##### Location %s #####\n", locStrA [location] );
 		printf ("	e - Explore a %s Territory \n", locStrA [location] );
 		printf ("	s - Sack a %s Territory\n", locStrA [ location] );
-		printf ("	r - Raid a neighboring clan\n");		printf ("	b - Be attacked by a neighboring clan\n");
+		printf ("	r - Raid a neighboring clan\n");		
+		printf ("	b - Be attacked by a neighboring clan\n");
 		printf ("	g - Goal (%s)\n", ageStrA [age] );
 		printf ("	a - Award  (%s)\n", ageStrA [age] );
 		printf ("	c - Change Age from %s\n", ageStrA [age] );
 		printf ("	n - Set location 'near' \n");
 		printf ("	m - Set location 'medium' \n");
 		printf ("	f - Set location 'far' \n");
-             printf ("    1 - Print Cards\n");
+      printf ("	1 - Print Cards\n");
 		printf ("	q - Quit\n");
 		scanf ("%c%c", &ans, &ch) ;
 
@@ -708,6 +788,3 @@ int main (int argc, char *argv[]){
 
 }//main
 
-
- *My favorite app::C++ For iOS - Free  https://itunes.apple.com/app/id1016322367?mt=8
-Other's Tutorals:http://iii9i.com
