@@ -5,8 +5,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+//#include <curses.h>
 
 int version = 1;		// Starting Version - 2 March 2020
+int weapon = 0;
 
 enum e_item {
 	e_food,
@@ -377,6 +379,7 @@ int attack (int youDice, int themDice)
 	int	youA [50];
 	int	i;
 	int	score = 0;
+	int	tWeapon = weapon;
 
 	// reset arrays to 0
    for (i=0; i<youDice; i++) {
@@ -386,8 +389,13 @@ int attack (int youDice, int themDice)
 
 	// Figure out dice
 	printf ("Your dice : ");
-   for (i=0; i<youDice; i++)
+   for (i=0; i<youDice; i++) {
 		youA [i] = rand()%6+1;
+		if (tWeapon) {
+			youA [i]++;		// add weapon
+			tWeapon--;
+		}//if
+	}//fori
 	sort (youA, youDice);
    for (i=0; i<youDice; i++)
         printf ("%d    ", youA [i]);
@@ -429,7 +437,8 @@ void beAttacked (int age){
     int num;
     printf ("------- Be Attacked by a neighboring clan -------\n");
     printf ("Defend with how many dice:  ");
-    scanf ("%d\n", &num);
+	fpurge (stdin);
+    scanf ("%d", &num);
     
     int i;
     int score = 0;
@@ -468,6 +477,7 @@ void runRaid (int age){
 
    printf ("------- Raid a neighboring clan -------\n");
    printf ("Number of dice:  ");
+	fpurge (stdin);
    scanf ("%d", &num);
    //scanf ("%d\n", &num);
 
@@ -502,7 +512,8 @@ void runSack (int location, int age){
     int num;
     printf ("------- Sack a village -------\n");
     printf ("Number of dice:  ");
-    scanf ("%d\n", &num);
+	fpurge (stdin);
+    scanf ("%d", &num);
     
     int i;
     int score = 0;
@@ -565,7 +576,8 @@ void newTerritory (int location) {
     int num;
     printf ("------- New Territory -------\n");
     printf ("Number of dice:  ");
-    scanf ("%d\n", &num);
+	fpurge (stdin);
+    scanf ("%d", &num);
     
     int i, max;
     
@@ -679,14 +691,18 @@ void doNear (int cnt) {
 	}//if val
 }//doNear
 
+void printMenu ();
+char *locStrA []= { "no", "Near", "Medium", "Far" };
+char *ageStrA []= { "Never", "Early", "Mid", "Old" };
 
 ///////////////////////////////////////
 int main (int argc, char *argv[]){
-
+	//cbreak();
 	int i;
 	int val;
 	time_t t;
 
+	printf ("Version %d\n", version);
 	srand ((unsigned) time (&t));
 	char ans;
 	char ch;
@@ -694,26 +710,16 @@ int main (int argc, char *argv[]){
 	int age = 1;
 	int location = 1;
 
-	char *locStrA []= { "no", "Near", "Medium", "Far" };
-	char *ageStrA []= { "Never", "Early", "Mid", "Old" };
 
+	printMenu(location, age);
 	while (1) {
 
 		printf ("##### Age      %s #####\n", ageStrA [age]);
 		printf ("##### Location %s #####\n", locStrA [location] );
-		printf ("	e - Explore a %s Territory \n", locStrA [location] );
-		printf ("	s - Sack a %s Territory\n", locStrA [ location] );
-		printf ("	r - Raid a neighboring clan\n");		
-		printf ("	b - Be attacked by a neighboring clan\n");
-		printf ("	g - Goal (%s)\n", ageStrA [age] );
-		printf ("	a - Award  (%s)\n", ageStrA [age] );
-		printf ("	c - Change Age from %s\n", ageStrA [age] );
-		printf ("	n - Set location 'near' \n");
-		printf ("	m - Set location 'medium' \n");
-		printf ("	f - Set location 'far' \n");
-      printf ("	1 - Print Cards\n");
-		printf ("	q - Quit\n");
-		scanf ("%c%c", &ans, &ch) ;
+		printf ("##### Weapon's %d #####\n", weapon);
+		printf ("Menu [esrb gaw cnmf 1q?]> ");
+	fpurge (stdin);
+		scanf ("%c", &ans) ;
 
 		printf ("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
         
@@ -735,6 +741,16 @@ int main (int argc, char *argv[]){
 
 			break;
 
+		case ' ':		
+		case '\n':		
+		case '\r':		
+		case '?':		
+			printMenu(location, age);
+			break;
+		case 'W':		
+		case 'w':		
+			weapon++;
+			break;
 		case 'N':		
 		case 'n':		
 			location = 1;
@@ -787,4 +803,22 @@ int main (int argc, char *argv[]){
 
 
 }//main
+
+void printMenu (int location, int age){
+		printf ("	e - Explore a %s Territory \n", locStrA [location] );
+		printf ("	s - Sack a %s Territory\n", locStrA [ location] );
+		printf ("	r - Raid a neighboring clan\n");		
+		printf ("	b - Be attacked by a neighboring clan\n");
+		printf ("	g - Goal (%s)\n", ageStrA [age] );
+		printf ("	a - Award  (%s)\n", ageStrA [age] );
+		printf ("	w - Weapon Upgrade  (%s)\n", ageStrA [age] );
+		printf ("	c - Change Age from %s\n", ageStrA [age] );
+		printf ("	n - Set location 'near' \n");
+		printf ("	m - Set location 'medium' \n");
+		printf ("	f - Set location 'far' \n");
+      printf ("	1 - Print Cards\n");
+		printf ("	q - Quit\n");
+		printf ("	? - Quit\n");
+
+}//printMenu
 
