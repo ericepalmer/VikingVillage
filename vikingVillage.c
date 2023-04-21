@@ -6,22 +6,28 @@
 #include <math.h>
 #include <time.h>
 
-int version = 1;		// Starting Version - 2 March 2020
+int version = 2;		// Starting Version - 2 March 2020, 20 Apr 2023
 
 enum e_item {
-	e_food,
+	e_wheat,
 	e_wood,
+	e_wool,
+	e_honey,
+	e_fur,
+	e_antlers,
+	e_millStones,
+
 	e_silver,
-	e_population,
 	e_cow,
+	e_sheep,
 	e_weapon,
 	e_iron,
+
 	e_silk,
-	e_wool,
 	e_gold,
 	e_ivory,
 	e_salt,
-	e_wine,
+	e_jewelry,
 	e_none,
 	};
 
@@ -38,19 +44,25 @@ struct trade {
 };
 
 char smallA [][20] = { 
-	"Food",
+	"Wheat",
 	"Wood",
+	"Wool",
+	"Honey",
+	"Fur",
+	"Antlers",
+	"millStones",
+
 	"Silver",
-	"Population",
 	"Cow",
+	"Sheep",
 	"Weapon Upgrade",
 	"Iron" ,
+
 	"Silk" ,
-	"Wool" ,
 	"Gold" ,
 	"Ivory" ,
 	"Salt" ,
-	"Wine" ,
+	"Jewelry" ,
 	"None" 
 };
 
@@ -114,37 +126,37 @@ void selectTrade (struct trade *it, float volitility){
 }//
 
 struct trade nearA [] = { 
-{ e_silver, e_food,		5,	20}, 
-{ e_silver, e_food,		5,	20}, 
-{ e_silver, e_food,		5,	20}, 
-{ e_silver, e_food,		5,	20}, 
-{ e_food, e_silver,		0.2, 	10},
-{ e_food, e_silver,		0.2, 	10},
+{ e_silver, e_wheat,		5,	20}, 
+{ e_silver, e_wheat,		5,	20}, 
+{ e_silver, e_wheat,		5,	20}, 
+{ e_silver, e_wheat,		5,	20}, 
+{ e_wheat, e_silver,		0.2, 	10},
+{ e_wheat, e_silver,		0.2, 	10},
 { e_silver, e_wood,		4,	20}, 
 { e_silver, e_wood,		4,	20}, 
 { e_wood, e_silver,		0.25, 	10},
 { e_wood, e_silver,		0.25, 	10},
-{ e_wood, e_food,			1, 	10},
-{ e_wood, e_food,			1, 	10},
+{ e_wood, e_wheat,			1, 	10},
+{ e_wood, e_wheat,			1, 	10},
 { e_silver, e_weapon,	0.333, 	5}, 
 { e_none, e_none,			0, 	1000} 
 };
 
 struct trade mediumA [] = { 
-{ e_silver, e_food,		4,	20}, 
-{ e_silver, e_food,		4,	20}, 
-{ e_food, e_silver,		0.25, 	10},
-{ e_food, e_silver,		0.25, 	10},
-{ e_food, e_silver,		0.25, 	10},
+{ e_silver, e_wheat,		4,	20}, 
+{ e_silver, e_wheat,		4,	20}, 
+{ e_wheat, e_silver,		0.25, 	10},
+{ e_wheat, e_silver,		0.25, 	10},
+{ e_wheat, e_silver,		0.25, 	10},
 { e_silver, e_wood,		6,	20}, 
 { e_silver, e_wood,		6,	20}, 
 { e_silver, e_wood,		6,	20}, 
 { e_wood, e_silver,		0.16, 	10},
-{ e_wood, e_food,			0.5, 	10},
+{ e_wood, e_wheat,			0.5, 	10},
 { e_silver, e_weapon,	0.5, 	5}, 
 { e_silver, e_cow,		0.5, 	5}, 
 { e_silver, e_iron,		3.0, 	5}, 
-{ e_population, e_silver, 		12, 	5}, 
+{ e_ivory, e_silver, 		12, 	5}, 
 { e_none, e_none,			0, 	1000} 
 };
 
@@ -159,11 +171,11 @@ struct trade exoticA [] = {
 };
 
 struct trade farA [] = { 
-{ e_silver, e_food,		3,	20}, 
-{ e_food, e_silver,		0.33, 	10},
+{ e_silver, e_wheat,		3,	20}, 
+{ e_wheat, e_silver,		0.33, 	10},
 { e_silver, e_wood,		3,	20}, 
 { e_wood, e_silver,		0.33, 	10},
-{ e_population, e_silver,		15, 	10},
+{ e_ivory, e_silver,		15, 	10},
 { e_silver, e_weapon,		0.5, 	10},
 { e_silver, e_iron,		0.5, 	10},
 { e_silver, e_silk, 		0.33, 	10}, 
@@ -176,44 +188,44 @@ struct trade farA [] = {
 };
 
 struct s_sack sackNear[] =  {
-{ e_food, 1 },
-{ e_food, 1 },
-{ e_food, 1 },
-{ e_food, 1 },
-{ e_food, 1 },
-{ e_food, 1 },
+{ e_wheat, 1 },
+{ e_wheat, 1 },
+{ e_wheat, 1 },
+{ e_wheat, 1 },
+{ e_wheat, 1 },
+{ e_wheat, 1 },
 { e_silver, 5 },
 { e_silver, 5 },
 { e_silver, 5 },
-{ e_population, 10 },
+{ e_ivory, 10 },
 { e_none, 1000 }
 };
 
 struct s_sack sackMedium [] =  {
-{ e_food, 1 },
-{ e_food, 1 },
-{ e_food, 1 },
-{ e_food, 1 },
-{ e_food, 1 },
+{ e_wheat, 1 },
+{ e_wheat, 1 },
+{ e_wheat, 1 },
+{ e_wheat, 1 },
+{ e_wheat, 1 },
 { e_iron, 2 },
 { e_ivory, 4 },
 { e_silver, 5 },
 { e_silver, 5 },
-{ e_population, 10 },
+{ e_ivory, 10 },
 { e_none, 1000 }
 };
 
 struct s_sack sackFar[] =  {
-{ e_food, 1 },
-{ e_food, 1 },
-{ e_food, 1 },
+{ e_wheat, 1 },
+{ e_wheat, 1 },
+{ e_wheat, 1 },
 { e_wool, 2 },
 { e_iron, 1 },
 { e_iron, 1 },
 { e_silver, 5 },
 { e_silver, 5 },
 { e_gold, 20 },
-{ e_population, 7 },
+{ e_ivory, 7 },
 { e_none, 1000 }
 };
 
@@ -244,10 +256,10 @@ char *award (int age) {
 		case 1: return "Gain 1 population";
 		case 2: return "Get 2 weapon upgrade";
 		case 3: return "Get 5 silver";
-		case 4: return "Get 1 population and 5 food";
+		case 4: return "Get 1 population and 5 wheat";
 		case 5: return "Get 3 weapon upgrades";
-		case 6: return "Get 15 food";
-		case 7: return "Get 20 food";
+		case 6: return "Get 15 wheat";
+		case 7: return "Get 20 wheat";
 		case 8: return "Get 15 wood";
 		case 9: return "Get 30 wood";
             case 10: return "Skip one raid test";
@@ -261,7 +273,7 @@ char *award (int age) {
             case 18: return "Automatic success for raid activity (before roll)";
             case 19: return "During a raid, all weapon dice are increased by one";
             case 20: return "On lost raid, reduce loss by half";
-            case 21: return "Sail activity requires no food";
+            case 21: return "Sail activity requires no wheat";
 	}//switch
 	return "oops - no find";
 	
@@ -274,46 +286,46 @@ char *setGoal (int age) {
 	var = rand ()%9;
 	if (age == 1)
 		switch (var) {
-			case 0: return "Trade food for 1 silver";
+			case 0: return "Trade wheat for 1 silver";
 			case 1: return "Discover a new territory";
 			case 2: return "Win a raid";
 			case 3: return "Successful sack";
 			case 4: return "Trade for 2 silver";
 			case 5: return "Get 1 cow";
-			case 6: return "Trade 8 food";
+			case 6: return "Trade 8 wheat";
 			case 7: return "Trade wood for 1 silver";
-			case 8: return "Buy 6 food";
-			case 9: return "Buy 12 food";
+			case 8: return "Buy 6 wheat";
+			case 9: return "Buy 12 wheat";
 			default : return "oops 1";
 		}//switch
 
 	if (age == 2)
 		switch (var) {
-			case 0: return "Trade food for 2 silver";
+			case 0: return "Trade wheat for 2 silver";
 			case 1: return "Discover a new medium territory";
 			case 2: return "Win a raid";
 			case 3: return "Successful sack";
 			case 4: return "Trade for 4 silver";
 			case 5: return "Get 1 population";
-			case 6: return "Trade 20 food";
+			case 6: return "Trade 20 wheat";
 			case 7: return "Trade wood for 2 silver";
-			case 8: return "Buy 12 food";
-			case 9: return "Buy 12 food";
+			case 8: return "Buy 12 wheat";
+			case 9: return "Buy 12 wheat";
 			default: return "oops 2";;
 		}//switch
 
 	if (age == 3)
 		switch (var) {
-			case 0: return "Trade food for 3 silver";
+			case 0: return "Trade wheat for 3 silver";
 			case 1: return "Discover a new far territory";
 			case 2: return "Win a raid";
 			case 3: return "Successful sack medium territory";
 			case 4: return "Trade for 6 silver";
 			case 5: return "Get 2 population";
-			case 6: return "Trade 30 food";
+			case 6: return "Trade 30 wheat";
 			case 7: return "Trade wood for 3 silver";
-			case 8: return "Buy 25 food";
-			case 9: return "Buy 12 food";
+			case 8: return "Buy 25 wheat";
+			case 9: return "Buy 12 wheat";
 			default: return "oops 3";;
 		}//switch
 
