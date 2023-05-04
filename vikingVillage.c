@@ -8,34 +8,67 @@
 
 int version = 2;		// Starting Version - 2 March 2020, 20 Apr 2023
 
+///////////////////////////////////////
 enum e_item {
-	e_wheat,
+	e_food,
 	e_wood,
 	e_wool,
 	e_honey,
 	e_fur,
 	e_antlers,
 	e_millStones,
+	// not used
+		e_leather,
+		e_clothes,
 
 	e_silver,
 	e_cow,
 	e_sheep,
 	e_weapon,
 	e_iron,
+	e_s_jewelry,
+	// not used
+		e_l_armor,
+		e_shield,
+		e_gem,
+		e_copper,
+		e_tin,
+		e_plough,
+		e_wine,
 
 	e_silk,
 	e_gold,
 	e_ivory,
 	e_salt,
-	e_jewelry,
-	e_none,
+	// not used
+		e_g_jewelry,
+		e_compass,
+		e_map
 	};
 
+///////////////////////////////////////
 struct s_sack {
 	enum e_item	loot;
 	int	points;
 };
 
+///////////////////////////////////////
+struct t_item {
+	enum e_item item;			// index to "name" for lookup
+	float	value;				// is silver
+	int	can_make;			// Can this item be used to make something
+	int 	consumed;			// Will this item be consumed
+};
+
+///////////////////////////////////////
+// This holds a single trade option
+struct t_trade {
+	enum e_item sell;
+	int nSell;
+	enum e_item buy;
+	int nBuy;
+};
+///////////////////////////////////////
 struct trade {
 	enum e_item	sell;
 	enum e_item	buy;
@@ -43,33 +76,84 @@ struct trade {
 	int	chance;
 };
 
-char smallA [][20] = { 
-	"Wheat",
-	"Wood",
-	"Wool",
-	"Honey",
-	"Fur",
-	"Antlers",
-	"millStones",
+char *getName (enum e_item item){
+	switch (item) {
+		case e_food: return "Food";
+		case e_wood: return "Lumber";
+		case e_wool: return "Wool";
+		case e_honey: return "Honey";
+		case e_fur: return "Fur";
+		case e_antlers: return "Antlers";
+		case e_millStones: return "Mill Stones";
+		case e_leather: return "Leather";
+		case e_clothes: return "Clothes";
+		case e_silver: return "Silver";
+		case e_cow: return "Cow";
+		case e_sheep: return "Sheep";
+		case e_weapon: return "Weapon Upgrade";
+		case e_iron: return "Iron ore";
+		case e_s_jewelry: return "Silver Jewelry";
+		case e_l_armor: return "Leather Armor";
+		case e_shield: return "Shield";
+		case e_gem: return "Gem Stone";
+		case e_copper: return "Copper ore";
+		case e_tin: return "Tin ore";
+		case e_plough: return "Plough";
+		case e_wine: return "Wine";
+		case e_silk: return "Silk";
+		case e_gold: return "Gold";
+		case e_ivory: return "Ivory";
+		case e_salt: return "Salt";
+		case e_g_jewelry: return "Gold Jewelry";
+		case e_compass: return "Compass";
+		case e_map: return "Map";
+		default: return "Unknown";
+	}//switch
 
-	"Silver",
-	"Cow",
-	"Sheep",
-	"Weapon Upgrade",
-	"Iron" ,
+}
 
-	"Silk" ,
-	"Gold" ,
-	"Ivory" ,
-	"Salt" ,
-	"Jewelry" ,
-	"None" 
+///////////////////////////////////////
+// t_item item, value, can_make, consumed
+struct t_item itemA [] = {
+	// Basic
+	{e_food, 		 .125, 0, 1},
+	{e_wood, 		.100, 1, 1},
+	{e_wool, 		.071, 0, 0},
+	{e_honey, 		 .25, 0, 0},
+	{e_fur, 			 .20, 0, 0},
+	{e_antlers, 	.05, 0, 0},
+	{e_millStones, .0333, 0, 0},
+	// not used
+		{e_leather, .02, 0, 0},
+		{e_clothes, .02, 0, 0},
+
+	// Special
+	{e_silver, 	1.00, 1, 1},
+	{e_cow, 		4.00, 1, 0},
+	{e_sheep, 	2.00, 1, 0},
+	{e_weapon, 	1.00, 0, 0},
+	{e_iron, 	0.50, 0, 0},
+	{e_s_jewelry, 3.00, 0, 0},
+	// not used
+		{e_l_armor, 1, 1, 1},
+		{e_shield, 1, 1, 1},
+		{e_gem, 1, 1, 1},
+		{e_copper, 1, 1, 1},
+		{e_tin, 1, 1, 1},
+		{e_plough, 1, 1, 1},
+
+	// Exotic
+	{e_silk, 		4, 0, 0},
+	{e_gold, 		10, 0, 0},
+	{e_ivory, 		6, 0, 0},
+	{e_g_jewelry, 	20, 0, 0},
+	{e_salt, 		2, 0, 0},
+	// not used
+		{e_compass, 	4, 0, 0},
+		{e_map, 		4, 0, 0}
 };
 
 ///////////////////////////////////////
-char *whatName (enum e_item what){
-	return smallA [(int) what];
-}//whatName
 
 int prevSelected [20];
 
@@ -119,106 +203,55 @@ void selectTrade (struct trade *it, float volitility){
 		num2 = it->num;
 	}
 
-	printf ("%d %s => %d %s \n", num1, smallA [it->sell], num2, smallA [it->buy]);
+	printf ("%d %s => %d %s \n", num1, getName (it->sell), num2, getName (it->buy));
     	//printf ("%d %s => %d %s \n", num1, "one", num2, "two");
-	//printf ("%d %s => %d %s (%d)\n", num1, whatName (it->sell), num2, whatName (it->buy), it->chance);
 
 }//
 
+///////////////////////////////////////
+///////////////////////////////////////
 struct trade nearA [] = { 
-{ e_silver, e_wheat,		5,	20}, 
-{ e_silver, e_wheat,		5,	20}, 
-{ e_silver, e_wheat,		5,	20}, 
-{ e_silver, e_wheat,		5,	20}, 
-{ e_wheat, e_silver,		0.2, 	10},
-{ e_wheat, e_silver,		0.2, 	10},
-{ e_silver, e_wood,		4,	20}, 
-{ e_silver, e_wood,		4,	20}, 
-{ e_wood, e_silver,		0.25, 	10},
-{ e_wood, e_silver,		0.25, 	10},
-{ e_wood, e_wheat,			1, 	10},
-{ e_wood, e_wheat,			1, 	10},
-{ e_silver, e_weapon,	0.333, 	5}, 
-{ e_none, e_none,			0, 	1000} 
 };
 
 struct trade mediumA [] = { 
-{ e_silver, e_wheat,		4,	20}, 
-{ e_silver, e_wheat,		4,	20}, 
-{ e_wheat, e_silver,		0.25, 	10},
-{ e_wheat, e_silver,		0.25, 	10},
-{ e_wheat, e_silver,		0.25, 	10},
-{ e_silver, e_wood,		6,	20}, 
-{ e_silver, e_wood,		6,	20}, 
-{ e_silver, e_wood,		6,	20}, 
-{ e_wood, e_silver,		0.16, 	10},
-{ e_wood, e_wheat,			0.5, 	10},
-{ e_silver, e_weapon,	0.5, 	5}, 
-{ e_silver, e_cow,		0.5, 	5}, 
-{ e_silver, e_iron,		3.0, 	5}, 
-{ e_ivory, e_silver, 		12, 	5}, 
-{ e_none, e_none,			0, 	1000} 
 };
 
-struct trade exoticA [] = { 
-{ e_silk, e_silver,		3, 	10}, 
-{ e_wool, e_silver,		2, 	10}, 
-{ e_gold, e_silver,		8, 	10}, 
-{ e_ivory, e_silver,		5, 	10}, 
-{ e_salt, e_silver,		4, 	10}, 
-{ e_wine, e_silver,		8, 	10}, 
-{ e_none, e_none,		0, 	1000}, 
-};
 
 struct trade farA [] = { 
-{ e_silver, e_wheat,		3,	20}, 
-{ e_wheat, e_silver,		0.33, 	10},
-{ e_silver, e_wood,		3,	20}, 
-{ e_wood, e_silver,		0.33, 	10},
-{ e_ivory, e_silver,		15, 	10},
-{ e_silver, e_weapon,		0.5, 	10},
-{ e_silver, e_iron,		0.5, 	10},
-{ e_silver, e_silk, 		0.33, 	10}, 
-{ e_silver, e_wool, 		0.5, 	10}, 
-{ e_silver, e_gold, 		0.125, 	10}, 
-{ e_silver, e_ivory, 	0.2, 	10}, 
-{ e_silver, e_salt, 		0.25, 	10}, 
-{ e_silver, e_wine, 		0.125, 	10}, 
-{ e_none, e_none,		0, 	1000}, 
 };
 
 struct s_sack sackNear[] =  {
-{ e_wheat, 1 },
-{ e_wheat, 1 },
-{ e_wheat, 1 },
-{ e_wheat, 1 },
-{ e_wheat, 1 },
-{ e_wheat, 1 },
+{ e_food, 1 },
+{ e_food, 1 },
+{ e_food, 1 },
+{ e_food, 1 },
+{ e_food, 1 },
+{ e_food, 1 },
 { e_silver, 5 },
 { e_silver, 5 },
 { e_silver, 5 },
 { e_ivory, 10 },
-{ e_none, 1000 }
+{ e_food, 1000 }
 };
 
 struct s_sack sackMedium [] =  {
-{ e_wheat, 1 },
-{ e_wheat, 1 },
-{ e_wheat, 1 },
-{ e_wheat, 1 },
-{ e_wheat, 1 },
+{ e_food, 1 },
+{ e_food, 1 },
+{ e_food, 1 },
+{ e_food, 1 },
+{ e_food, 1 },
 { e_iron, 2 },
 { e_ivory, 4 },
 { e_silver, 5 },
 { e_silver, 5 },
 { e_ivory, 10 },
-{ e_none, 1000 }
+{ e_food, 1000 }
 };
 
 struct s_sack sackFar[] =  {
-{ e_wheat, 1 },
-{ e_wheat, 1 },
-{ e_wheat, 1 },
+{ e_food, 1 },
+{ e_food, 1 },
+{ e_food, 1 },
 { e_wool, 2 },
 { e_iron, 1 },
 { e_iron, 1 },
@@ -226,7 +259,7 @@ struct s_sack sackFar[] =  {
 { e_silver, 5 },
 { e_gold, 20 },
 { e_ivory, 7 },
-{ e_none, 1000 }
+{ e_food, 1000 }
 };
 
 int	sackItemsA [20];
@@ -239,7 +272,7 @@ void displaySack () {
 
 	for (i=0; i<10; i++) {
 		if (sackItemsA [i])
-			printf ("   %d %s \n", sackItemsA[i], smallA [i]);
+			printf ("   %d %s \n", sackItemsA[i], getName(i));
 	}//for
 
 
@@ -620,6 +653,7 @@ void newTerritory (int location) {
 }//newterritory
 
 ///////////////////////////////////////
+/*
 void doMedium (int cnt) {
 	int i;
 	int val;
@@ -634,6 +668,7 @@ void doMedium (int cnt) {
 		prevSelected [val] = 1;
 		}//for 
 }//domedium
+*/
 
 ///////////////////////////////////////
 void doCards () {
@@ -667,29 +702,191 @@ void doCards () {
     for (i=0; i<10; i++) 			printf ("Goal: %s\n", award (1) );
     
 }//cards
+
+
+///////////////////////////////////////
+void printTrade (struct t_trade *trade) {
+	float sellSil = itemA[trade->sell].value * trade->nSell;
+	float buySil = itemA[trade->buy].value * trade->nBuy;
+	printf ("%3d %-7s %3d %-17s (%3.2f) \n", trade->nSell, getName (trade->sell), 
+					trade->nBuy, getName (trade->buy), buySil/sellSil * 100);
+}//printrade
     
     
 ///////////////////////////////////////
 void doNear (int cnt) {
 	int i;
-	int val;
+	int basicSelA [10];
+	struct t_trade trade;
 
-	for (i=0; i<20; i++) 
-		prevSelected [i] = 0;
-
+	printf ("------------------\n");
+	printf ("------------------\n");
 	printf ("      --- Near ---\n");
+	printf ("Selling  this for that\n");
+
+	int range = e_s_jewelry - e_silver;
+	enum e_item special = rand()%range + e_silver + 1;
+
+	// Loop for the number of times 
+	//		First one allows access to "special"
 	for (i=0; i<cnt; i++) {
-		val = rand ()%6 ;
-		selectTrade (&nearA [val], .2);
-			i--;		/// repeat this item if collision
-		}//for 
-	
-	val = rand ()%2;
-	if (val == 1) {
-		val = rand ()%6 ;
-		selectTrade (&exoticA [val], .5);
-	}//if val
-}//doNear
+
+		float bonus = 1.0;
+		int which = rand()%3;
+		if (which)
+				bonus = 1 + (rand()%30/100.0);
+		else
+				bonus = 1 - (rand()%20/100.0);
+
+		enum e_item buy = rand ()%e_millStones ;
+		enum e_item sell = rand ()%e_millStones ;
+
+
+		// Check for collisions
+		if (buy == sell){
+			//printf ("Match %d %d\n", buy, sell);
+			i--;
+			continue;
+		}//skip if perfect match
+
+		// If we are on the first one, set it to special
+		if (i == 0) buy = special;
+
+		// Calculate for a sale of one (1)
+		int factor = 1;		// Start assuming selling 1
+		float silver = itemA[sell].value * bonus;	// what does 1 sell for
+		silver *= 2;	// double selling value
+		float numBuy = silver / itemA[buy].value ;
+
+
+		// Recalculate if you need more than one item
+		if (numBuy < 1) 
+			factor = (int) (1.0 / (numBuy));
+		numBuy = silver * factor / itemA[buy].value ;
+
+		//printf ("Selling %d %s for %3.1f %s\n", factor, nameA[sell], numBuy, nameA[buy]);
+
+
+		// Bump if losing too much on rounding
+		float remainder = numBuy - (int) numBuy;
+		if ((remainder < .7) && (remainder > .1)){
+			factor ++;	
+			numBuy = silver * factor / itemA[buy].value ;
+			//printf ("Bump:   Selling %d %s for %3.1f %s\n", factor, nameA[sell], numBuy, nameA[buy]);
+		}//if low round
+
+		numBuy = (int) (numBuy + .6);
+
+
+		// Set the system and print
+		trade.buy = buy;
+		trade.sell = sell;
+		trade.nBuy = (int) numBuy;
+		trade.nSell = (int) factor;;
+		
+		printTrade (&trade);
+
+	}//for 
+
+
+	trade.buy = special;
+	trade.sell = e_silver;
+	trade.nBuy = 1;
+	float val = itemA[special].value ;
+	if (val < 1)
+		trade.nBuy = 2;
+	trade.nSell = itemA[special].value * trade.nBuy;
+
+	printTrade (&trade);
+}//donear
+
+///////////////////////////////////////
+void doFar (int cnt) {
+	int i;
+	int basicSelA [10];
+	struct t_trade trade;
+
+	printf ("------------------\n");
+	printf ("------------------\n");
+	printf ("      --- Far ---\n");
+	printf ("Selling  this for that\n");
+
+	int range = e_salt - e_silk + 1;
+	enum e_item special = rand()%range + e_silk ;
+
+	// Loop for the number of times 
+	//		First one allows access to "special"
+	for (i=0; i<cnt; i++) {
+
+		float bonus = 1.0;
+		int which = rand()%3;
+		if (which)
+				bonus = 1 + (rand()%30/100.0);
+		else
+				bonus = 1 - (rand()%20/100.0);
+
+		enum e_item buy = rand ()%e_millStones ;
+		enum e_item sell = rand ()%e_millStones ;
+
+
+		// Check for collisions
+		if (buy == sell){
+			//printf ("Match %d %d\n", buy, sell);
+			i--;
+			continue;
+		}//skip if perfect match
+
+		// If we are on the first one, set it to special
+		if (i == 0) buy = special;
+
+		// Calculate for a sale of one (1)
+		int factor = 1;		// Start assuming selling 1
+		float silver = itemA[sell].value * bonus;	// what does 1 sell for
+		silver *= 2;	// double selling value
+		float numBuy = silver / itemA[buy].value ;
+
+
+		// Recalculate if you need more than one item
+		if (numBuy < 1) 
+			factor = (int) (1.0 / (numBuy));
+		numBuy = silver * factor / itemA[buy].value ;
+
+		//printf ("Selling %d %s for %3.1f %s\n", factor, nameA[sell], numBuy, nameA[buy]);
+
+
+		// Bump if losing too much on rounding
+		float remainder = numBuy - (int) numBuy;
+		if ((remainder < .7) && (remainder > .1)){
+			factor ++;	
+			numBuy = silver * factor / itemA[buy].value ;
+			//printf ("Bump:   Selling %d %s for %3.1f %s\n", factor, nameA[sell], numBuy, nameA[buy]);
+		}//if low round
+
+		numBuy = (int) (numBuy + .6);
+
+
+		// Set the system and print
+		trade.buy = buy;
+		trade.sell = sell;
+		trade.nBuy = (int) numBuy;
+		trade.nSell = (int) factor;;
+		
+		printTrade (&trade);
+
+	}//for 
+
+
+	trade.buy = special;
+	trade.sell = e_silver;
+	trade.nBuy = 1;
+	float val = itemA[special].value ;
+	if (val < 1)
+		trade.nBuy = 2;
+	trade.nSell = itemA[special].value * trade.nBuy;
+
+	printTrade (&trade);
+
+}//dofar
 
 
 ///////////////////////////////////////
@@ -699,7 +896,7 @@ int main (int argc, char *argv[]){
 	int val;
 	time_t t;
 
-	srand ((unsigned) time (&t));
+	//srand ((unsigned) time (&t));
 	char ans;
 	char ch;
 
@@ -750,6 +947,7 @@ int main (int argc, char *argv[]){
 		case 'N':		
 		case 'n':		
 			location = 1;
+			doNear(4);
 			break;
 		case 'M':		
 		case 'm':		
@@ -758,15 +956,16 @@ int main (int argc, char *argv[]){
 		case 'F':		
 		case 'f':		
 			location = 3;
+			doFar(3);
 			break;
-            case 'r':
-            case 'R':
-                    runRaid(age);
-                    break;
-            case 'b':
-            case 'B':
-                    beAttacked(age);
-                    break;
+      case 'r':
+      case 'R':
+          runRaid(age);
+          break;
+      case 'b':
+      case 'B':
+           beAttacked(age);
+           break;
 		case 'c':					// Increase the current age
 		case 'C':
 			age++;
