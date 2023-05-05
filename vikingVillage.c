@@ -670,45 +670,13 @@ void doMedium (int cnt) {
 }//domedium
 */
 
-///////////////////////////////////////
-void doCards () {
-    int i;
-    
-    printf ("=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-    printf ("-- Near --\n");
-    for (i=0; i<4; i++) doTrade (2, nearA);
-    printf ("   ---- Sack ----\n");
-    for (i=0; i<4; i++) doSack (sackNear, 20);
-
-    printf ("=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-    printf ("-- Medium --\n");
-    for (i=0; i<4; i++) doTrade (3, mediumA);
-    printf ("   ---- Sack ----\n");
-    for (i=0; i<4; i++) doSack (sackMedium, 30);
-
-    printf ("=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-    printf ("-- Far --\n");
-    for (i=0; i<4; i++) doTrade (5, farA);
-    printf ("   ---- Sack ----\n");
-    for (i=0; i<4; i++) doSack (sackFar, 40);
-    
-    printf ("=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-    printf ("-- Age 1 Goals --\n");
-    for (i=0; i<10; i++) 			printf ("Goal: %s\n", setGoal (1) );
-
-    printf ("=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-    printf ("-- Age 1 Rewards --\n");
-
-    for (i=0; i<10; i++) 			printf ("Goal: %s\n", award (1) );
-    
-}//cards
 
 
 ///////////////////////////////////////
 void printTrade (struct t_trade *trade) {
 	float sellSil = itemA[trade->sell].value * trade->nSell;
 	float buySil = itemA[trade->buy].value * trade->nBuy;
-	printf ("%3d %-7s %3d %-17s (%3.2f) \n", trade->nSell, getName (trade->sell), 
+	printf ("%3d %-16s %3d %-17s (%3.2f) \n", trade->nSell, getName (trade->sell), 
 					trade->nBuy, getName (trade->buy), buySil/sellSil * 100);
 }//printrade
     
@@ -811,8 +779,11 @@ void doFar (int cnt) {
 	printf ("      --- Far ---\n");
 	printf ("Selling  this for that\n");
 
-	int range = e_salt - e_silk + 1;
-	enum e_item special = rand()%range + e_silk ;
+	int range = e_s_jewelry - e_silver;
+	enum e_item special = rand()%range + e_silver + 1;
+
+	range = e_salt - e_silk + 1;
+	enum e_item exotic = rand()%range + e_silk ;
 
 	// Loop for the number of times 
 	//		First one allows access to "special"
@@ -836,13 +807,19 @@ void doFar (int cnt) {
 			continue;
 		}//skip if perfect match
 
-		// If we are on the first one, set it to special
-		if (i == 0) buy = special;
+		// If we are on the first one, set it to exotic
+		if (i == 0) buy = exotic;
+		// If we are on the second one, trade special for exotic
+		if (i == 1) {
+			range = e_s_jewelry - e_silver;
+			buy = rand()%range + e_silk ;
+			sell = special;
+		}//sell special
 
 		// Calculate for a sale of one (1)
 		int factor = 1;		// Start assuming selling 1
 		float silver = itemA[sell].value * bonus;	// what does 1 sell for
-		silver *= 2;	// double selling value
+		silver *= 4;	// double selling value
 		float numBuy = silver / itemA[buy].value ;
 
 
@@ -876,18 +853,40 @@ void doFar (int cnt) {
 	}//for 
 
 
-	trade.buy = special;
+	trade.buy = exotic;
 	trade.sell = e_silver;
 	trade.nBuy = 1;
-	float val = itemA[special].value ;
+	float val = itemA[exotic].value ;
 	if (val < 1)
 		trade.nBuy = 2;
-	trade.nSell = itemA[special].value * trade.nBuy;
+	trade.nSell = itemA[exotic].value * trade.nBuy;
 
 	printTrade (&trade);
 
 }//dofar
 
+///////////////////////////////////////
+void doCards () {
+	int i;
+    
+	printf ("=-=-=-=-=-=-=-=-=-=-=-=-=\n");
+	printf ("-- Near --\n");
+	for (i=0; i<6; i++) 
+		doNear(5);
+
+    printf ("=-=-=-=-=-=-=-=-=-=-=-=-=\n");
+    printf ("-- Far --\n");
+    for (i=0; i<4; i++) 
+		doFar(6);
+    
+	printf ("=-=-=-=-=-=-=-=-=-=-=-=-=\n");
+	printf ("-- Age 1 Goals --\n");
+	for (i=0; i<10; i++) 			{
+		printf ("Goal: %s\n", setGoal (1) );
+    	printf ("      Award: %s\n", award (1) );
+	}//for
+
+}//cards
 
 ///////////////////////////////////////
 int main (int argc, char *argv[]){
@@ -917,10 +916,11 @@ int main (int argc, char *argv[]){
 		printf ("	g - Goal (%s)\n", ageStrA [age] );
 		printf ("	a - Award  (%s)\n", ageStrA [age] );
 		printf ("	c - Change Age from %s\n", ageStrA [age] );
-		printf ("	n - Set location 'near' \n");
-		printf ("	m - Set location 'medium' \n");
-		printf ("	f - Set location 'far' \n");
+
+		printf ("	n - Explor 'near' \n");
+		printf ("	f - Explor 'far' \n");
       printf ("	1 - Print Cards\n");
+
 		printf ("	q - Quit\n");
 		scanf ("%c%c", &ans, &ch) ;
 
@@ -951,12 +951,10 @@ int main (int argc, char *argv[]){
 			break;
 		case 'M':		
 		case 'm':		
-			location = 2;
-			break;
 		case 'F':		
 		case 'f':		
 			location = 3;
-			doFar(3);
+			doFar(5);
 			break;
       case 'r':
       case 'R':
