@@ -43,7 +43,12 @@ enum e_item {
 	// not used
 		e_g_jewelry,
 		e_compass,
-		e_map
+		e_map,
+
+	// Overview
+	e_basic,
+	e_special,
+	e_exotic
 	};
 
 ///////////////////////////////////////
@@ -415,7 +420,7 @@ void doTrade (int cnt, struct trade *list) {
 }//dolarge
 
 
-
+///////////////////////////////////////
 int attack (int youDice, int themDice)
 {
 	int	themA [50];
@@ -682,188 +687,206 @@ void printTrade (struct t_trade *trade) {
     
     
 ///////////////////////////////////////
-void doNear (int cnt) {
+void buildTrade (enum e_item sell, enum e_item buy, float multi) {
+
 	int i;
-	int basicSelA [10];
 	struct t_trade trade;
+
+
+	int range = e_s_jewelry - e_silver;
+	enum e_item special = rand()%range + e_silver + 1;
+
+	// Loop for the number of times 
+	//		First one allows access to "special"
+	for (i=0; i<20; i++) {
+
+		float bonus = 1.0;
+		int which = rand()%3;
+		if (which)
+				bonus = 1 + (rand()%30/100.0);
+		else
+				bonus = 1 - (rand()%20/100.0);
+
+
+
+		// Check for collisions
+		if (buy == sell){
+			printf ("Match %d %d\n", buy, sell);
+			sell = rand ()%e_millStones ;
+			continue;
+		}//skip if perfect match
+
+		// Calculate for a sale of one (1)
+		int factor = 1;		// Start assuming selling 1
+		float silver = itemA[sell].value * bonus;	// what does 1 sell for
+		silver *= multi;	// double selling value
+		float numBuy = silver / itemA[buy].value ;
+
+
+		// Recalculate if you need more than one item
+		if (numBuy < 1) 
+			factor = (int) (1.0 / (numBuy));
+		numBuy = silver * factor / itemA[buy].value ;
+
+		//printf ("Selling %d %s for %3.1f %s\n", factor, nameA[sell], numBuy, nameA[buy]);
+
+
+		// Bump if losing too much on rounding
+		float remainder = numBuy - (int) numBuy;
+		if ((remainder < .7) && (remainder > .1)){
+			factor ++;	
+			numBuy = silver * factor / itemA[buy].value ;
+			//printf ("Bump:   Selling %d %s for %3.1f %s\n", factor, nameA[sell], numBuy, nameA[buy]);
+		}//if low round
+
+		numBuy = (int) (numBuy + .6);
+
+
+		// Set the system and print
+		trade.buy = buy;
+		trade.sell = sell;
+		trade.nBuy = (int) numBuy;
+		trade.nSell = (int) factor;;
+		
+		printTrade (&trade);
+		return;
+
+	}//for 
+
+}//selectit
+
+///////////////////////////////////////
+enum e_item randBasic() {
+	enum e_item which = rand ()%e_millStones ;
+	return which;
+}//randbasic
+
+///////////////////////////////////////
+enum e_item randSpecial() {
+	int range = e_s_jewelry - e_silver;
+	enum e_item special = rand()%range + e_silver + 1;
+	return special;
+}//randbasic
+
+///////////////////////////////////////
+enum e_item randExotic() {
+	int range = e_salt - e_silk + 1;
+	enum e_item exotic = rand()%range + e_silk ;
+	return exotic;
+}//randbasic
+
+///////////////////////////////////////
+void doNear (int cnt) {
+	int 	i;
+	enum e_item basic1, basic2, special, exotic;
 
 	printf ("------------------\n");
 	printf ("------------------\n");
 	printf ("      --- Near ---\n");
 	printf ("Selling  this for that\n");
 
-	int range = e_s_jewelry - e_silver;
-	enum e_item special = rand()%range + e_silver + 1;
 
-	// Loop for the number of times 
-	//		First one allows access to "special"
+	// do focused item regardless
+	special = randSpecial();
+	basic1 = randBasic();
+	buildTrade (e_silver, special, 1); 
+	buildTrade (basic1, special, 2); 
+
+	// Look for each trade
 	for (i=0; i<cnt; i++) {
 
-		float bonus = 1.0;
-		int which = rand()%3;
-		if (which)
-				bonus = 1 + (rand()%30/100.0);
-		else
-				bonus = 1 - (rand()%20/100.0);
+		// Pick every optio and use only what is needed
+		basic1 = randBasic();
+		basic2 = randBasic();
+		if (basic1 == basic2)
+			basic2 = randBasic();
+		special = randSpecial();
+		exotic = randExotic();
 
-		enum e_item buy = rand ()%e_millStones ;
-		enum e_item sell = rand ()%e_millStones ;
+		int which = rand()%21;
+		switch (which) {
+			case 0: 
+			case 1: 
+			case 2: 
+			case 3: 
+			case 4: 
+			case 5: 
+			case 6: 
+			case 7: 
+			case 8: 
+			case 9: 
+			case 10: 
+			case 11: buildTrade (basic1, basic2, 2); break;
 
+			case 12:
+			case 13:
+			case 14:
+			case 15:
+			case 16: buildTrade (basic1, special, 2); break;
 
-		// Check for collisions
-		if (buy == sell){
-			//printf ("Match %d %d\n", buy, sell);
-			i--;
-			continue;
-		}//skip if perfect match
+			case 17: buildTrade (basic1, e_silver, 2); break;
+	
+			case 18: buildTrade (special, e_silver, 2); break;
+			case 19: buildTrade (exotic, e_silver, 2); break;
+			case 20: buildTrade (exotic, special, 2); break;
+			default: printf ("oops %d\n", which); break;
+		};//switch
+	}//for
 
-		// If we are on the first one, set it to special
-		if (i == 0) buy = special;
-
-		// Calculate for a sale of one (1)
-		int factor = 1;		// Start assuming selling 1
-		float silver = itemA[sell].value * bonus;	// what does 1 sell for
-		silver *= 2;	// double selling value
-		float numBuy = silver / itemA[buy].value ;
-
-
-		// Recalculate if you need more than one item
-		if (numBuy < 1) 
-			factor = (int) (1.0 / (numBuy));
-		numBuy = silver * factor / itemA[buy].value ;
-
-		//printf ("Selling %d %s for %3.1f %s\n", factor, nameA[sell], numBuy, nameA[buy]);
-
-
-		// Bump if losing too much on rounding
-		float remainder = numBuy - (int) numBuy;
-		if ((remainder < .7) && (remainder > .1)){
-			factor ++;	
-			numBuy = silver * factor / itemA[buy].value ;
-			//printf ("Bump:   Selling %d %s for %3.1f %s\n", factor, nameA[sell], numBuy, nameA[buy]);
-		}//if low round
-
-		numBuy = (int) (numBuy + .6);
-
-
-		// Set the system and print
-		trade.buy = buy;
-		trade.sell = sell;
-		trade.nBuy = (int) numBuy;
-		trade.nSell = (int) factor;;
-		
-		printTrade (&trade);
-
-	}//for 
-
-
-	trade.buy = special;
-	trade.sell = e_silver;
-	trade.nBuy = 1;
-	float val = itemA[special].value ;
-	if (val < 1)
-		trade.nBuy = 2;
-	trade.nSell = itemA[special].value * trade.nBuy;
-
-	printTrade (&trade);
 }//donear
 
 ///////////////////////////////////////
 void doFar (int cnt) {
-	int i;
-	int basicSelA [10];
-	struct t_trade trade;
+	int 	i;
+	enum e_item basic1, basic2, special, exotic, exotic2;
 
 	printf ("------------------\n");
 	printf ("------------------\n");
 	printf ("      --- Far ---\n");
 	printf ("Selling  this for that\n");
 
-	int range = e_s_jewelry - e_silver;
-	enum e_item special = rand()%range + e_silver + 1;
 
-	range = e_salt - e_silk + 1;
-	enum e_item exotic = rand()%range + e_silk ;
+	// do focused item regardless
+	exotic = randExotic();
+	basic1 = randBasic();
+	buildTrade (e_silver, exotic, 1); 
+	buildTrade (basic1, exotic, 4); 
 
-	// Loop for the number of times 
-	//		First one allows access to "special"
+	// Look for each trade
 	for (i=0; i<cnt; i++) {
 
-		float bonus = 1.0;
-		int which = rand()%3;
-		if (which)
-				bonus = 1 + (rand()%30/100.0);
-		else
-				bonus = 1 - (rand()%20/100.0);
+		// Pick every optio and use only what is needed
+		basic1 = randBasic();
+		basic2 = randBasic();
+		if (basic1 == basic2)
+			basic2 = randBasic();
+		special = randSpecial();
+		exotic = randExotic();
+		exotic2 = randExotic();
 
-		enum e_item buy = rand ()%e_millStones ;
-		enum e_item sell = rand ()%e_millStones ;
+		int which = rand()%12;
+		switch (which) {
+			case 0: 
+			case 1: 
+			case 2: 
+			case 3: 
+			case 4: buildTrade (basic1, basic2, 4); break;
 
+			case 5:
+			case 6:
+			case 7:
+			case 8: buildTrade (basic1, exotic, 4); break;
 
-		// Check for collisions
-		if (buy == sell){
-			//printf ("Match %d %d\n", buy, sell);
-			i--;
-			continue;
-		}//skip if perfect match
-
-		// If we are on the first one, set it to exotic
-		if (i == 0) buy = exotic;
-		// If we are on the second one, trade special for exotic
-		if (i == 1) {
-			range = e_s_jewelry - e_silver;
-			buy = rand()%range + e_silk ;
-			sell = special;
-		}//sell special
-
-		// Calculate for a sale of one (1)
-		int factor = 1;		// Start assuming selling 1
-		float silver = itemA[sell].value * bonus;	// what does 1 sell for
-		silver *= 4;	// double selling value
-		float numBuy = silver / itemA[buy].value ;
-
-
-		// Recalculate if you need more than one item
-		if (numBuy < 1) 
-			factor = (int) (1.0 / (numBuy));
-		numBuy = silver * factor / itemA[buy].value ;
-
-		//printf ("Selling %d %s for %3.1f %s\n", factor, nameA[sell], numBuy, nameA[buy]);
-
-
-		// Bump if losing too much on rounding
-		float remainder = numBuy - (int) numBuy;
-		if ((remainder < .7) && (remainder > .1)){
-			factor ++;	
-			numBuy = silver * factor / itemA[buy].value ;
-			//printf ("Bump:   Selling %d %s for %3.1f %s\n", factor, nameA[sell], numBuy, nameA[buy]);
-		}//if low round
-
-		numBuy = (int) (numBuy + .6);
-
-
-		// Set the system and print
-		trade.buy = buy;
-		trade.sell = sell;
-		trade.nBuy = (int) numBuy;
-		trade.nSell = (int) factor;;
-		
-		printTrade (&trade);
-
-	}//for 
-
-
-	trade.buy = exotic;
-	trade.sell = e_silver;
-	trade.nBuy = 1;
-	float val = itemA[exotic].value ;
-	if (val < 1)
-		trade.nBuy = 2;
-	trade.nSell = itemA[exotic].value * trade.nBuy;
-
-	printTrade (&trade);
+			case 9: buildTrade (special, exotic, 4); break;
+	
+			case 10: buildTrade (exotic, e_silver, 4); break;
+			case 11: buildTrade (exotic, exotic2, 4); break;
+			default: printf ("oops %d\n", which); break;
+		};//switch
+	}//for
 
 }//dofar
+
 
 ///////////////////////////////////////
 void doCards () {
@@ -877,7 +900,7 @@ void doCards () {
     printf ("=-=-=-=-=-=-=-=-=-=-=-=-=\n");
     printf ("-- Far --\n");
     for (i=0; i<4; i++) 
-		doFar(6);
+		doFar(5);
     
 	printf ("=-=-=-=-=-=-=-=-=-=-=-=-=\n");
 	printf ("-- Age 1 Goals --\n");
@@ -947,7 +970,7 @@ int main (int argc, char *argv[]){
 		case 'N':		
 		case 'n':		
 			location = 1;
-			doNear(4);
+			doNear(5);
 			break;
 		case 'M':		
 		case 'm':		
