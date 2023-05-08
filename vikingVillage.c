@@ -5,8 +5,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <strings.h>
 
-int version = 2;		// Starting Version - 2 March 2020, 20 Apr 2023
+int 	version = 2;		// Starting Version - 2 March 2020, 20 Apr 2023
+FILE	*debugF;			// output log
 
 ///////////////////////////////////////
 enum e_item {
@@ -112,6 +114,9 @@ char *getName (enum e_item item){
 		case e_g_jewelry: return "Gold Jewelry";
 		case e_compass: return "Compass";
 		case e_map: return "Map";
+		case e_basic: return "Basic";
+		case e_special: return "Special";
+		case e_exotic: return "Exotic";
 		default: return "Unknown";
 	}//switch
 
@@ -129,8 +134,8 @@ struct t_item itemA [] = {
 	{e_antlers, 	.05, 0, 0},
 	{e_millStones, .0333, 0, 0},
 	// not used
-		{e_leather, .02, 0, 0},
-		{e_clothes, .02, 0, 0},
+		{e_leather, -1, 0, 0},
+		{e_clothes, -1, 0, 0},
 
 	// Special
 	{e_silver, 	1.00, 1, 1},
@@ -140,22 +145,26 @@ struct t_item itemA [] = {
 	{e_iron, 	0.50, 0, 0},
 	{e_s_jewelry, 3.00, 0, 0},
 	// not used
-		{e_l_armor, 1, 1, 1},
-		{e_shield, 1, 1, 1},
-		{e_gem, 1, 1, 1},
-		{e_copper, 1, 1, 1},
-		{e_tin, 1, 1, 1},
-		{e_plough, 1, 1, 1},
+		{e_l_armor, -1, 1, 1},
+		{e_shield, -1, 1, 1},
+		{e_gem, -1, 1, 1},
+		{e_copper, -1, 1, 1},
+		{e_tin, -1, 1, 1},
+		{e_plough, -1, 1, 1},
+		{e_wine, -1, 1, 1},
 
 	// Exotic
 	{e_silk, 		4, 0, 0},
 	{e_gold, 		10, 0, 0},
 	{e_ivory, 		6, 0, 0},
-	{e_g_jewelry, 	20, 0, 0},
 	{e_salt, 		2, 0, 0},
 	// not used
-		{e_compass, 	4, 0, 0},
-		{e_map, 		4, 0, 0}
+		{e_g_jewelry, 	-1, 0, 0},
+		{e_compass, 	-1, 0, 0},
+		{e_map, 		-1, 0, 0},
+		{e_basic, 		-1, -1, -1},
+		{e_special, 		-1, -1, -1},
+		{e_exotic, 		-1, -1, -1}
 };
 
 ///////////////////////////////////////
@@ -681,6 +690,14 @@ void doMedium (int cnt) {
 void printTrade (struct t_trade *trade) {
 	float sellSil = itemA[trade->sell].value * trade->nSell;
 	float buySil = itemA[trade->buy].value * trade->nBuy;
+
+	if (debugF) {
+		fprintf (debugF, "  Sell:  %16s %3.2f (%3.2f)\n", getName (trade->sell), itemA[trade->sell].value, sellSil);
+		fprintf (debugF, "  Buy:   %16s %3.2f (%3.2f)\n", getName (trade->buy), itemA[trade->buy].value, buySil);
+		fprintf (debugF, "%d %s %d %-17s (%3.2f) \n", 
+					trade->nSell, getName (trade->sell), 
+					trade->nBuy, getName (trade->buy), buySil/sellSil * 100);
+	}//if
 	printf ("%3d %-16s %3d %-17s (%3.2f) \n", trade->nSell, getName (trade->sell), 
 					trade->nBuy, getName (trade->buy), buySil/sellSil * 100);
 }//printrade
@@ -692,6 +709,7 @@ void buildTrade (enum e_item sell, enum e_item buy, float multi) {
 	int i;
 	struct t_trade trade;
 
+	if (debugF) fprintf (debugF, "  Multi: %3.2f---\n", multi);
 
 	int range = e_s_jewelry - e_silver;
 	enum e_item special = rand()%range + e_silver + 1;
@@ -708,6 +726,7 @@ void buildTrade (enum e_item sell, enum e_item buy, float multi) {
 				bonus = 1 - (rand()%20/100.0);
 
 
+	if (debugF) fprintf (debugF, "  Bonus: %3.2f---\n", bonus);
 
 		// Check for collisions
 		if (buy == sell){
@@ -728,7 +747,8 @@ void buildTrade (enum e_item sell, enum e_item buy, float multi) {
 			factor = (int) (1.0 / (numBuy));
 		numBuy = silver * factor / itemA[buy].value ;
 
-		//printf ("Selling %d %s for %3.1f %s\n", factor, nameA[sell], numBuy, nameA[buy]);
+		if (debugF) 
+			fprintf (debugF, "  Selling %d %s for %3.1f %s\n", factor, getName (sell), numBuy, getName (buy));
 
 
 		// Bump if losing too much on rounding
@@ -736,7 +756,8 @@ void buildTrade (enum e_item sell, enum e_item buy, float multi) {
 		if ((remainder < .7) && (remainder > .1)){
 			factor ++;	
 			numBuy = silver * factor / itemA[buy].value ;
-			//printf ("Bump:   Selling %d %s for %3.1f %s\n", factor, nameA[sell], numBuy, nameA[buy]);
+			if (debugF)
+				fprintf (debugF,   "  Bump:   Selling %d %s for %3.1f %s\n", factor, getName (sell), numBuy, getName (buy));
 		}//if low round
 
 		numBuy = (int) (numBuy + .6);
@@ -789,7 +810,10 @@ void doNear (int cnt) {
 	// do focused item regardless
 	special = randSpecial();
 	basic1 = randBasic();
+	if (debugF) fprintf (debugF, "Near ----------------------------- %s\n", "silver to special");
 	buildTrade (e_silver, special, 1); 
+
+	if (debugF) fprintf (debugF, "Near ----------------------------- %s\n", "basic to silver");
 	buildTrade (basic1, special, 2); 
 
 	// Look for each trade
@@ -804,6 +828,7 @@ void doNear (int cnt) {
 		exotic = randExotic();
 
 		int which = rand()%21;
+		if (debugF) fprintf (debugF, "Near ----------------------------- %d\n", which);
 		switch (which) {
 			case 0: 
 			case 1: 
@@ -849,7 +874,10 @@ void doFar (int cnt) {
 	// do focused item regardless
 	exotic = randExotic();
 	basic1 = randBasic();
+	if (debugF) fprintf (debugF, "Far ----------------------------- %s\n", "silver to exotic");
 	buildTrade (e_silver, exotic, 1); 
+
+	if (debugF) fprintf (debugF, "Far ----------------------------- %s\n", "basic to exotic");
 	buildTrade (basic1, exotic, 4); 
 
 	// Look for each trade
@@ -865,6 +893,7 @@ void doFar (int cnt) {
 		exotic2 = randExotic();
 
 		int which = rand()%12;
+		if (debugF) fprintf (debugF, "Far which  ----------------------------- %d\n", which);
 		switch (which) {
 			case 0: 
 			case 1: 
@@ -875,12 +904,12 @@ void doFar (int cnt) {
 			case 5:
 			case 6:
 			case 7:
-			case 8: buildTrade (basic1, exotic, 4); break;
+			case 8: buildTrade (basic1, exotic, 3); break;
 
-			case 9: buildTrade (special, exotic, 4); break;
+			case 9: buildTrade (special, exotic, 2); break;
 	
-			case 10: buildTrade (exotic, e_silver, 4); break;
-			case 11: buildTrade (exotic, exotic2, 4); break;
+			case 10: buildTrade (exotic, e_silver, 2); break;
+			case 11: buildTrade (exotic, exotic2, 2); break;
 			default: printf ("oops %d\n", which); break;
 		};//switch
 	}//for
@@ -914,9 +943,21 @@ void doCards () {
 ///////////////////////////////////////
 int main (int argc, char *argv[]){
 
+	debugF = 0;
+	if (argc == 2)
+		if (strcmp (argv[1], "-d") == 0) 		// turn debug output on
+			debugF = fopen ("debug.txt", "w");;
+
 	int i;
 	int val;
 	time_t t;
+
+
+	if (debugF) {
+		enum e_item el;
+		for (el=e_food; el <= e_exotic; el++)
+			fprintf (debugF, "%d	%s	%3.2f\n", el, getName(el), itemA[el].value);
+	}//fi
 
 	//srand ((unsigned) time (&t));
 	char ans;
