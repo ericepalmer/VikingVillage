@@ -99,6 +99,7 @@ struct t_village {
 	enum e_item exotic;
 	int			sacked;
 	float			value;
+	float			sackValue;
 };
 
 
@@ -257,44 +258,14 @@ struct trade farA [] = {
 };
 
 struct s_sack sackNear[] =  {
-{ e_food, 1 },
-{ e_food, 1 },
-{ e_food, 1 },
-{ e_food, 1 },
-{ e_food, 1 },
-{ e_food, 1 },
-{ e_silver, 5 },
-{ e_silver, 5 },
-{ e_silver, 5 },
-{ e_ivory, 10 },
 { e_food, 1000 }
 };
 
 struct s_sack sackMedium [] =  {
-{ e_food, 1 },
-{ e_food, 1 },
-{ e_food, 1 },
-{ e_food, 1 },
-{ e_food, 1 },
-{ e_iron, 2 },
-{ e_ivory, 4 },
-{ e_silver, 5 },
-{ e_silver, 5 },
-{ e_ivory, 10 },
 { e_food, 1000 }
 };
 
 struct s_sack sackFar[] =  {
-{ e_food, 1 },
-{ e_food, 1 },
-{ e_food, 1 },
-{ e_wool, 2 },
-{ e_iron, 1 },
-{ e_iron, 1 },
-{ e_silver, 5 },
-{ e_silver, 5 },
-{ e_gold, 20 },
-{ e_ivory, 7 },
 { e_food, 1000 }
 };
 
@@ -715,9 +686,10 @@ void makeSack (struct t_village *currV) {
 
 	maxVal = currV->value * (rand()%150)/100.0;
 
-	printf ("Goal value %3.3f\n", maxVal);
+	printf ("Sack loot (value: %3.3f)\n", maxVal);
+	//printf ("Goal value %3.3f\n", maxVal);
 	enum e_item item = currV->special;
-	if (! item)
+	if (item == 32) 
 		item = currV->exotic;
 	//printf ("Sacking main: %s\n", getName (item));
 
@@ -726,12 +698,11 @@ void makeSack (struct t_village *currV) {
 		i++;
 		float val = itemA [item].value;
 		currVal += val;
-		printf ("     %10s value %3.3f (Sum %3.3f)\n", getName(item), 
-													val, currVal);
+		//printf ("     %10s value %3.3f (Sum %3.3f)\n", getName(item), val, currVal);
+		printf ("     %10s\n", getName(item)), 
 		item = randBasic() ;
 	} while (i<5);
-
-
+	currV->sackValue = currVal;
 
 }//makesake
 
@@ -1005,6 +976,7 @@ void doFar (struct t_village *currV) {
 		printTrade (currV->trade[i]);
 	}//for
 	currV->value = sum;
+	makeSack(currV);
 
 }//dofar
 
