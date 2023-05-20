@@ -10,6 +10,10 @@
 int 	version = 2;		// Starting Version - 2 March 2020, 20 Apr 2023
 FILE	*debugF;			// output log
 
+enum e_item randBasic() ;
+enum e_item randSpecial() ;
+enum e_item randExotic() ;
+
 ///////////////////////////////////////
 enum e_item {
 	e_food,
@@ -50,7 +54,8 @@ enum e_item {
 	// Overview
 	e_basic,
 	e_special,
-	e_exotic
+	e_exotic,
+	e_none
 	};
 
 ///////////////////////////////////////
@@ -67,6 +72,7 @@ struct t_item {
 	int 	consumed;			// Will this item be consumed
 };
 
+
 ///////////////////////////////////////
 // This holds a single trade option
 struct t_trade {
@@ -76,6 +82,7 @@ struct t_trade {
 	int nBuy;
 };
 ///////////////////////////////////////
+//del - goinging
 struct trade {
 	enum e_item	sell;
 	enum e_item	buy;
@@ -83,6 +90,20 @@ struct trade {
 	int	chance;
 };
 
+///////////////////////////////////////
+struct t_village {
+	struct t_trade *trade[20];
+	char			name[64];
+	int			num;
+	enum e_item special;
+	enum e_item exotic;
+	int			sacked;
+	float			value;
+};
+
+
+
+///////////////////////////////////////
 char *getName (enum e_item item){
 	switch (item) {
 		case e_food: return "Food";
@@ -124,6 +145,7 @@ char *getName (enum e_item item){
 
 ///////////////////////////////////////
 // t_item item, value, can_make, consumed
+// These must remain in order
 struct t_item itemA [] = {
 	// Basic
 	{e_food, 		 .125, 0, 1},
@@ -387,7 +409,7 @@ void doSack (struct s_sack *list, int points) {
 	int item;
 	
     printf ("   ------- \n");        
-	for (i=0; i<20; i++) 
+	for (i=e_food; i<e_exotic; i++) 
 		sackItemsA[i] = 0;
 	
 	for (i=0; i<50; i++) {
@@ -687,13 +709,43 @@ void doMedium (int cnt) {
 
 
 ///////////////////////////////////////
+void makeSack (struct t_village *currV) {
+	float maxVal;
+	float currVal = 0;
+
+	maxVal = currV->value * (rand()%150)/100.0;
+
+	printf ("Goal value %3.3f\n", maxVal);
+	enum e_item item = currV->special;
+	if (! item)
+		item = currV->exotic;
+	//printf ("Sacking main: %s\n", getName (item));
+
+	int i = 0;
+	do {
+		i++;
+		float val = itemA [item].value;
+		currVal += val;
+		printf ("     %10s value %3.3f (Sum %3.3f)\n", getName(item), 
+													val, currVal);
+		item = randBasic() ;
+	} while (i<5);
+
+
+
+}//makesake
+
+
+///////////////////////////////////////
 void printTrade (struct t_trade *trade) {
 	float sellSil = itemA[trade->sell].value * trade->nSell;
 	float buySil = itemA[trade->buy].value * trade->nBuy;
 
 	if (debugF) {
-		fprintf (debugF, "  Sell:  %16s %3.2f (%3.2f)\n", getName (trade->sell), itemA[trade->sell].value, sellSil);
-		fprintf (debugF, "  Buy:   %16s %3.2f (%3.2f)\n", getName (trade->buy), itemA[trade->buy].value, buySil);
+		fprintf (debugF, "  Sell:  %16s %3.2f (%3.2f)\n", getName (trade->sell), 
+							itemA[trade->sell].value, sellSil);
+		fprintf (debugF, "  Buy:   %16s %3.2f (%3.2f)\n", getName (trade->buy), 
+							itemA[trade->buy].value, buySil);
 		fprintf (debugF, "%d %s %d %-17s (%3.2f) \n", 
 					trade->nSell, getName (trade->sell), 
 					trade->nBuy, getName (trade->buy), buySil/sellSil * 100);
@@ -704,10 +756,10 @@ void printTrade (struct t_trade *trade) {
     
     
 ///////////////////////////////////////
-void buildTrade (enum e_item sell, enum e_item buy, float multi) {
+void buildTrade (enum e_item sell, enum e_item buy, 
+		float multi, struct t_village *currV) {
 
 	int i;
-	struct t_trade trade;
 
 	if (debugF) fprintf (debugF, "  Multi: %3.2f---\n", multi);
 
@@ -726,11 +778,11 @@ void buildTrade (enum e_item sell, enum e_item buy, float multi) {
 				bonus = 1 - (rand()%20/100.0);
 
 
-	if (debugF) fprintf (debugF, "  Bonus: %3.2f---\n", bonus);
+		if (debugF) fprintf (debugF, "  Bonus: %3.2f---\n", bonus);
 
 		// Check for collisions
 		if (buy == sell){
-			printf ("Match %d %d\n", buy, sell);
+			if (debugF) fprintf (debugF, "Match %d %d\n", buy, sell);
 			sell = rand ()%e_millStones ;
 			continue;
 		}//skip if perfect match
@@ -748,7 +800,8 @@ void buildTrade (enum e_item sell, enum e_item buy, float multi) {
 		numBuy = silver * factor / itemA[buy].value ;
 
 		if (debugF) 
-			fprintf (debugF, "  Selling %d %s for %3.1f %s\n", factor, getName (sell), numBuy, getName (buy));
+			fprintf (debugF, "  Selling %d %s for %3.1f %s\n", factor, 
+							getName (sell), numBuy, getName (buy));
 
 
 		// Bump if losing too much on rounding
@@ -757,19 +810,31 @@ void buildTrade (enum e_item sell, enum e_item buy, float multi) {
 			factor ++;	
 			numBuy = silver * factor / itemA[buy].value ;
 			if (debugF)
-				fprintf (debugF,   "  Bump:   Selling %d %s for %3.1f %s\n", factor, getName (sell), numBuy, getName (buy));
+				fprintf (debugF,   "  Bump:   Selling %d %s for %3.1f %s\n", factor,
+						getName (sell), numBuy, getName (buy));
 		}//if low round
 
 		numBuy = (int) (numBuy + .6);
 
 
 		// Set the system and print
-		trade.buy = buy;
-		trade.sell = sell;
-		trade.nBuy = (int) numBuy;
-		trade.nSell = (int) factor;;
+		struct t_trade *trade ;
+		trade = (struct t_trade *) malloc (sizeof (struct t_trade));;
+		trade->buy = buy;
+		trade->sell = sell;
+		trade->nBuy = (int) numBuy;
+		trade->nSell = (int) factor;;
 		
-		printTrade (&trade);
+		int num = currV->num;
+		currV->trade [num] = trade;
+		currV->num++;
+		if (debugF) {
+			fprintf (debugF, "  CurrV %s %d\n", currV->name, currV->num);
+		}//if debugF
+
+		// print the output
+		//printTrade (trade);
+
 		return;
 
 	}//for 
@@ -797,27 +862,28 @@ enum e_item randExotic() {
 }//randbasic
 
 ///////////////////////////////////////
-void doNear (int cnt) {
+void doNear (struct t_village *currV) {
 	int 	i;
 	enum e_item basic1, basic2, special, exotic;
 
 	printf ("------------------\n");
 	printf ("------------------\n");
 	printf ("      --- Near ---\n");
-	printf ("Selling  this for that\n");
+	printf (  "Selling           Buying\n");
 
 
 	// do focused item regardless
 	special = randSpecial();
 	basic1 = randBasic();
-	if (debugF) fprintf (debugF, "Near ----------------------------- %s\n", "silver to special");
-	buildTrade (e_silver, special, 1); 
+	if (debugF) fprintf (debugF, "Near --------- %s\n", "silver to special");
+	buildTrade (e_silver, special, 1, currV); 
+	currV->special = special;
 
-	if (debugF) fprintf (debugF, "Near ----------------------------- %s\n", "basic to silver");
-	buildTrade (basic1, special, 2); 
+	if (debugF) fprintf (debugF, "Near --------- %s\n", "basic to silver");
+	buildTrade (basic1, special, 2, currV); 
 
 	// Look for each trade
-	for (i=0; i<cnt; i++) {
+	for (i=0; i<5; i++) {
 
 		// Pick every optio and use only what is needed
 		basic1 = randBasic();
@@ -828,7 +894,7 @@ void doNear (int cnt) {
 		exotic = randExotic();
 
 		int which = rand()%21;
-		if (debugF) fprintf (debugF, "Near ----------------------------- %d\n", which);
+		if (debugF) fprintf (debugF, "Near ------------------- %d\n", which);
 		switch (which) {
 			case 0: 
 			case 1: 
@@ -841,47 +907,61 @@ void doNear (int cnt) {
 			case 8: 
 			case 9: 
 			case 10: 
-			case 11: buildTrade (basic1, basic2, 2); break;
+			case 11: buildTrade (basic1, basic2, 2, currV); break;
 
 			case 12:
 			case 13:
 			case 14:
 			case 15:
-			case 16: buildTrade (basic1, special, 2); break;
+			case 16: buildTrade (basic1, special, 2, currV); break;
 
-			case 17: buildTrade (basic1, e_silver, 2); break;
+			case 17: buildTrade (basic1, e_silver, 2, currV); break;
 	
-			case 18: buildTrade (special, e_silver, 2); break;
-			case 19: buildTrade (exotic, e_silver, 2); break;
-			case 20: buildTrade (exotic, special, 2); break;
+			case 18: buildTrade (special, e_silver, 2, currV); break;
+			case 19: buildTrade (exotic, e_silver, 2, currV); break;
+			case 20: buildTrade (exotic, special, 2, currV); break;
 			default: printf ("oops %d\n", which); break;
 		};//switch
 	}//for
 
+	// Calculate the value of the village, one of each of selling
+	int num = currV->num;
+	float sum = 0;
+	enum e_item item;
+	for (i=0; i<num; i++){
+		item = currV->trade[i]->buy;
+		if (i > 0)			// skip the 1st item, which is duplicated
+			sum += itemA[item].value;
+		printTrade (currV->trade[i]);
+	}//for
+	currV->value = sum;
+
+	makeSack(currV);
 }//donear
 
 ///////////////////////////////////////
-void doFar (int cnt) {
+void doFar (struct t_village *currV) {
 	int 	i;
 	enum e_item basic1, basic2, special, exotic, exotic2;
 
 	printf ("------------------\n");
 	printf ("------------------\n");
 	printf ("      --- Far ---\n");
-	printf ("Selling  this for that\n");
+	printf ("  Selling              Buying\n");
 
 
 	// do focused item regardless
 	exotic = randExotic();
 	basic1 = randBasic();
-	if (debugF) fprintf (debugF, "Far ----------------------------- %s\n", "silver to exotic");
-	buildTrade (e_silver, exotic, 1); 
+	if (debugF) fprintf (debugF, "Far --------- %s\n", "silver to exotic");
+	buildTrade (e_silver, exotic, 1, currV); 
+	currV->exotic = exotic;
 
-	if (debugF) fprintf (debugF, "Far ----------------------------- %s\n", "basic to exotic");
-	buildTrade (basic1, exotic, 4); 
+	if (debugF) fprintf (debugF, "Far --------- %s\n", "basic to exotic");
+	buildTrade (basic1, exotic, 4, currV); 
 
 	// Look for each trade
-	for (i=0; i<cnt; i++) {
+	for (i=0; i<5; i++) {
 
 		// Pick every optio and use only what is needed
 		basic1 = randBasic();
@@ -893,26 +973,38 @@ void doFar (int cnt) {
 		exotic2 = randExotic();
 
 		int which = rand()%12;
-		if (debugF) fprintf (debugF, "Far which  ----------------------------- %d\n", which);
+		if (debugF) fprintf (debugF, "Far which  --------- %d\n", which);
 		switch (which) {
 			case 0: 
 			case 1: 
 			case 2: 
 			case 3: 
-			case 4: buildTrade (basic1, basic2, 4); break;
+			case 4: buildTrade (basic1, basic2, 4, currV); break;
 
 			case 5:
 			case 6:
 			case 7:
-			case 8: buildTrade (basic1, exotic, 3); break;
+			case 8: buildTrade (basic1, exotic, 3, currV); break;
 
-			case 9: buildTrade (special, exotic, 2); break;
+			case 9: buildTrade (special, exotic, 2, currV); break;
 	
-			case 10: buildTrade (exotic, e_silver, 2); break;
-			case 11: buildTrade (exotic, exotic2, 2); break;
+			case 10: buildTrade (exotic, e_silver, 2, currV); break;
+			case 11: buildTrade (exotic, exotic2, 2, currV); break;
 			default: printf ("oops %d\n", which); break;
 		};//switch
 	}//for
+
+	// Calculate the value of the village, one of each of selling
+	int num = currV->num;
+	float sum = 0;
+	enum e_item item;
+	for (i=0; i<num; i++){		
+		item = currV->trade[i]->buy;
+		if (i > 0)			// skip the 1st item, which is duplicated
+			sum += itemA[item].value;
+		printTrade (currV->trade[i]);
+	}//for
+	currV->value = sum;
 
 }//dofar
 
@@ -924,12 +1016,12 @@ void doCards () {
 	printf ("=-=-=-=-=-=-=-=-=-=-=-=-=\n");
 	printf ("-- Near --\n");
 	for (i=0; i<6; i++) 
-		doNear(5);
+		doNear(NULL);
 
     printf ("=-=-=-=-=-=-=-=-=-=-=-=-=\n");
     printf ("-- Far --\n");
     for (i=0; i<4; i++) 
-		doFar(5);
+		doFar(NULL);
     
 	printf ("=-=-=-=-=-=-=-=-=-=-=-=-=\n");
 	printf ("-- Age 1 Goals --\n");
@@ -939,6 +1031,47 @@ void doCards () {
 	}//for
 
 }//cards
+
+///////////////////////////////////////
+struct t_village *initVillage (){
+	int	i;
+	
+	struct t_village *newV = (struct t_village *) malloc (sizeof 
+				(struct t_village));
+
+	for (i=0; i<20; i++) {
+		newV->trade [i] = 0;
+	}//for
+	newV->special = e_none;
+	newV->exotic = e_none;
+	newV->num = 0;
+
+	newV->name[0] = rand()%26 + 'A';
+	int num = rand()%5;
+	char val;
+	switch (num) {
+		case 0: val = 'a'; break;
+		case 1: val = 'e'; break;
+		case 2: val = 'i'; break;
+		case 3: val = 'o'; break;
+		case 4: val = 'u'; break;
+	}//switch
+	newV->name[1] = val;
+	newV->name[2] = rand()%26 + 'a';
+	switch (num) {
+		case 0: val = 'a'; break;
+		case 1: val = 'e'; break;
+		case 2: val = 'i'; break;
+		case 3: val = 'o'; break;
+		case 4: val = 'u'; break;
+	}//switch
+	newV->name[3] = val;
+	newV->name[4] = rand()%26 + 'a';
+	newV->name[5] = '\0';
+
+	return newV;
+
+}//initvillage
 
 ///////////////////////////////////////
 int main (int argc, char *argv[]){
@@ -952,6 +1085,22 @@ int main (int argc, char *argv[]){
 	int val;
 	time_t t;
 
+
+	struct t_village *nearV [6];
+	for (i=0; i<6; i++) {
+		nearV [i] = initVillage();
+		doNear (nearV[i]);
+		printf ("%d %s (Special: %s) (Village Value %3.1f)\n", i, 
+			nearV[i]->name, getName (nearV[i]->special), nearV[i]->value);
+	}//for
+		
+	struct t_village *farV [6];
+	for (i=0; i<6; i++){
+		farV [i] = initVillage();
+		doFar (farV[i]);
+		printf ("%d %s (Exotic: %s) (Village Value %3.1f)\n", i, 
+			farV [i]->name, getName (farV[i]->exotic), farV[i]->value);
+	}//for
 
 	if (debugF) {
 		enum e_item el;
@@ -968,6 +1117,8 @@ int main (int argc, char *argv[]){
 
 	char *locStrA []= { "no", "Near", "Medium", "Far" };
 	char *ageStrA []= { "Never", "Early", "Mid", "Old" };
+
+	struct t_village dummyV;
 
 	while (1) {
 
@@ -1011,14 +1162,14 @@ int main (int argc, char *argv[]){
 		case 'N':		
 		case 'n':		
 			location = 1;
-			doNear(5);
+			doNear(&dummyV);
 			break;
 		case 'M':		
 		case 'm':		
 		case 'F':		
 		case 'f':		
 			location = 3;
-			doFar(5);
+			doFar(&dummyV);
 			break;
       case 'r':
       case 'R':
@@ -1060,4 +1211,5 @@ int main (int argc, char *argv[]){
 
 
 }//main
+
 
