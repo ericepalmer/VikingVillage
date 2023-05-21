@@ -13,6 +13,7 @@ FILE	*debugF;			// output log
 enum e_item randBasic() ;
 enum e_item randSpecial() ;
 enum e_item randExotic() ;
+struct t_village *initVillage ();
 
 ///////////////////////////////////////
 enum e_item {
@@ -684,9 +685,9 @@ void makeSack (struct t_village *currV) {
 	float maxVal;
 	float currVal = 0;
 
-	maxVal = currV->value * (rand()%150)/100.0;
+	maxVal = currV->value * (rand()%150)/100.0;	// goal, not used
 
-	printf ("Sack loot (value: %3.3f)\n", maxVal);
+	printf ("Village:  %8s -----------------------\n", currV->name);
 	//printf ("Goal value %3.3f\n", maxVal);
 	enum e_item item = currV->special;
 	if (item == 32) 
@@ -703,6 +704,7 @@ void makeSack (struct t_village *currV) {
 		item = randBasic() ;
 	} while (i<5);
 	currV->sackValue = currVal;
+	printf ("     Sack loot (value: %3.3f)\n", currV->sackValue);
 
 }//makesake
 
@@ -907,7 +909,6 @@ void doNear (struct t_village *currV) {
 	}//for
 	currV->value = sum;
 
-	makeSack(currV);
 }//donear
 
 ///////////////////////////////////////
@@ -976,7 +977,6 @@ void doFar (struct t_village *currV) {
 		printTrade (currV->trade[i]);
 	}//for
 	currV->value = sum;
-	makeSack(currV);
 
 }//dofar
 
@@ -984,16 +984,25 @@ void doFar (struct t_village *currV) {
 ///////////////////////////////////////
 void doCards () {
 	int i;
+	struct t_village *currV;
     
 	printf ("=-=-=-=-=-=-=-=-=-=-=-=-=\n");
 	printf ("-- Near --\n");
-	for (i=0; i<6; i++) 
-		doNear(NULL);
+	for (i=0; i<6; i++) {
+		currV = initVillage();
+		doNear(currV);
+		printf ("%d %s (Special: %s) (Village Value %3.1f)\n", i, 
+			currV->name, getName (currV->special), currV->value);
+	}//for
 
     printf ("=-=-=-=-=-=-=-=-=-=-=-=-=\n");
     printf ("-- Far --\n");
-    for (i=0; i<4; i++) 
-		doFar(NULL);
+    for (i=0; i<6; i++)  {
+		currV = initVillage();
+		doFar(currV);
+		printf ("%d %s (Exotic: %s) (Village Value %3.1f)\n", i, 
+			currV->name, getName (currV->exotic), currV->value);
+	}//for
     
 	printf ("=-=-=-=-=-=-=-=-=-=-=-=-=\n");
 	printf ("-- Age 1 Goals --\n");
@@ -1074,11 +1083,16 @@ int main (int argc, char *argv[]){
 			farV [i]->name, getName (farV[i]->exotic), farV[i]->value);
 	}//for
 
+	for (i=0; i<6; i++) 
+		makeSack(nearV[i]);
+	for (i=0; i<6; i++) 
+		makeSack(farV[i]);
+
 	if (debugF) {
 		enum e_item el;
 		for (el=e_food; el <= e_exotic; el++)
 			fprintf (debugF, "%d	%s	%3.2f\n", el, getName(el), itemA[el].value);
-	}//fi
+	}//if
 
 	//srand ((unsigned) time (&t));
 	char ans;
@@ -1090,8 +1104,8 @@ int main (int argc, char *argv[]){
 	char *locStrA []= { "no", "Near", "Medium", "Far" };
 	char *ageStrA []= { "Never", "Early", "Mid", "Old" };
 
-	struct t_village dummyV;
-
+	struct t_village *dummyV;
+	dummyV = initVillage();
 	while (1) {
 
 		printf ("##### Age      %s #####\n", ageStrA [age]);
@@ -1134,14 +1148,20 @@ int main (int argc, char *argv[]){
 		case 'N':		
 		case 'n':		
 			location = 1;
-			doNear(&dummyV);
+			dummyV = initVillage();
+			doNear(dummyV);
+			printf ("%d %s (Special: %s) (Village Value %3.1f)\n", i, 
+			dummyV->name, getName (dummyV->special), dummyV->value);
 			break;
 		case 'M':		
 		case 'm':		
 		case 'F':		
 		case 'f':		
 			location = 3;
-			doFar(&dummyV);
+			dummyV = initVillage();
+			doFar(dummyV);
+			printf ("%d %s (Special: %s) (Village Value %3.1f)\n", i, 
+			dummyV->name, getName (dummyV->special), dummyV->value);
 			break;
       case 'r':
       case 'R':
