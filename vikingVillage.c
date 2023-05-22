@@ -687,7 +687,8 @@ void makeSack (struct t_village *currV) {
 
 	maxVal = currV->value * (rand()%150)/100.0;	// goal, not used
 
-	printf ("Village:  %8s -----------------------\n", currV->name);
+	printf ("---------------------------------------\n");
+	printf ("Sacking Village:  %8s \n", currV->name);
 	//printf ("Goal value %3.3f\n", maxVal);
 	enum e_item item = currV->special;
 	if (item == 32) 
@@ -705,6 +706,7 @@ void makeSack (struct t_village *currV) {
 	} while (i<5);
 	currV->sackValue = currVal;
 	printf ("     Sack loot (value: %3.3f)\n", currV->sackValue);
+	printf ("\n\n\n");
 
 }//makesake
 
@@ -723,8 +725,8 @@ void printTrade (struct t_trade *trade) {
 					trade->nSell, getName (trade->sell), 
 					trade->nBuy, getName (trade->buy), buySil/sellSil * 100);
 	}//if
-	printf ("%3d %-16s %3d %-17s (%3.2f) \n", trade->nSell, getName (trade->sell), 
-					trade->nBuy, getName (trade->buy), buySil/sellSil * 100);
+	printf ("%3d	%s	%3d	%s\n", trade->nSell, getName (trade->sell), 
+					trade->nBuy, getName (trade->buy));
 }//printrade
     
     
@@ -839,10 +841,7 @@ void doNear (struct t_village *currV) {
 	int 	i;
 	enum e_item basic1, basic2, special, exotic;
 
-	printf ("------------------\n");
-	printf ("------------------\n");
-	printf ("      --- Near ---\n");
-	printf (  "Selling           Buying\n");
+	printf (  "Sell		Get   \n");
 
 
 	// do focused item regardless
@@ -908,6 +907,7 @@ void doNear (struct t_village *currV) {
 		printTrade (currV->trade[i]);
 	}//for
 	currV->value = sum;
+	printf ("\n\n\n");
 
 }//donear
 
@@ -916,10 +916,7 @@ void doFar (struct t_village *currV) {
 	int 	i;
 	enum e_item basic1, basic2, special, exotic, exotic2;
 
-	printf ("------------------\n");
-	printf ("------------------\n");
-	printf ("      --- Far ---\n");
-	printf ("  Selling              Buying\n");
+	printf ("Sell		Get\n");
 
 
 	// do focused item regardless
@@ -977,6 +974,7 @@ void doFar (struct t_village *currV) {
 		printTrade (currV->trade[i]);
 	}//for
 	currV->value = sum;
+	printf ("\n\n\n");
 
 }//dofar
 
@@ -987,29 +985,21 @@ void doCards () {
 	struct t_village *currV;
     
 	printf ("=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-	printf ("-- Near --\n");
 	for (i=0; i<6; i++) {
+		printf ("-- Near --\n");
 		currV = initVillage();
+	//	printf ("Village %d:  %s	(Near) ", 99, currV->name);
 		doNear(currV);
-		printf ("%d %s (Special: %s) (Village Value %3.1f)\n", i, 
-			currV->name, getName (currV->special), currV->value);
 	}//for
 
     printf ("=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-    printf ("-- Far --\n");
     for (i=0; i<6; i++)  {
+    	printf ("-- Far --\n");
 		currV = initVillage();
 		doFar(currV);
-		printf ("%d %s (Exotic: %s) (Village Value %3.1f)\n", i, 
-			currV->name, getName (currV->exotic), currV->value);
+	//	printf ("Village %d:  %s	(Far) ", 99, currV->name);
 	}//for
     
-	printf ("=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-	printf ("-- Age 1 Goals --\n");
-	for (i=0; i<10; i++) 			{
-		printf ("Goal: %s\n", setGoal (1) );
-    	printf ("      Award: %s\n", award (1) );
-	}//for
 
 }//cards
 
@@ -1070,23 +1060,28 @@ int main (int argc, char *argv[]){
 	struct t_village *nearV [6];
 	for (i=0; i<6; i++) {
 		nearV [i] = initVillage();
+		printf ("Village %d: %s	(Near)\n\n", i+1, nearV[i]->name);
 		doNear (nearV[i]);
-		printf ("%d %s (Special: %s) (Village Value %3.1f)\n", i, 
-			nearV[i]->name, getName (nearV[i]->special), nearV[i]->value);
 	}//for
 		
 	struct t_village *farV [6];
 	for (i=0; i<6; i++){
 		farV [i] = initVillage();
+		printf ("Village %d: %s	(Far)\n\n", i+1, farV [i]->name);
 		doFar (farV[i]);
-		printf ("%d %s (Exotic: %s) (Village Value %3.1f)\n", i, 
-			farV [i]->name, getName (farV[i]->exotic), farV[i]->value);
 	}//for
 
 	for (i=0; i<6; i++) 
 		makeSack(nearV[i]);
 	for (i=0; i<6; i++) 
 		makeSack(farV[i]);
+
+	printf ("=-=-=-=-=-=-=-=-=-=-=-=-=\n");
+	printf ("-- Age 1 Goals --\n");
+	for (i=0; i<10; i++) 			{
+		printf ("Goal: %s\n", setGoal (1) );
+    	printf ("      Award: %s\n", award (1) );
+	}//for
 
 	if (debugF) {
 		enum e_item el;
@@ -1149,9 +1144,8 @@ int main (int argc, char *argv[]){
 		case 'n':		
 			location = 1;
 			dummyV = initVillage();
+			printf ("Village %d:	%s	Near\n\n", 99, dummyV->name);
 			doNear(dummyV);
-			printf ("%d %s (Special: %s) (Village Value %3.1f)\n", i, 
-			dummyV->name, getName (dummyV->special), dummyV->value);
 			break;
 		case 'M':		
 		case 'm':		
@@ -1159,9 +1153,8 @@ int main (int argc, char *argv[]){
 		case 'f':		
 			location = 3;
 			dummyV = initVillage();
+			printf ("Village %d:	%s	Far", 99, dummyV->name);
 			doFar(dummyV);
-			printf ("%d %s (Special: %s) (Village Value %3.1f)\n", i, 
-			dummyV->name, getName (dummyV->special), dummyV->value);
 			break;
       case 'r':
       case 'R':
