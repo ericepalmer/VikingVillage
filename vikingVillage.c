@@ -17,24 +17,28 @@ struct t_village *initVillage ();
 
 ///////////////////////////////////////
 enum e_item {
+	e_basic,
 	e_food,
 	e_wood,
 	e_wool,
-	e_honey,
 	e_fur,
-	e_antlers,
-	e_millStones,
+	e_honey,
+	e_basicEnd,
 	// not used
+		e_antlers,
+		e_millStones,
 		e_leather,
 		e_clothes,
 
+	e_special,
 	e_silver,
-	e_cow,
 	e_sheep,
 	e_weapon,
 	e_iron,
 	e_s_jewelry,
+	e_specialEnd,
 	// not used
+		e_cow,
 		e_l_armor,
 		e_shield,
 		e_gem,
@@ -43,19 +47,18 @@ enum e_item {
 		e_plough,
 		e_wine,
 
+	e_exotic,
 	e_silk,
 	e_gold,
 	e_ivory,
 	e_salt,
+	e_exoticEnd,
 	// not used
 		e_g_jewelry,
 		e_compass,
 		e_map,
 
 	// Overview
-	e_basic,
-	e_special,
-	e_exotic,
 	e_none
 	};
 
@@ -138,8 +141,11 @@ char *getName (enum e_item item){
 		case e_compass: return "Compass";
 		case e_map: return "Map";
 		case e_basic: return "Basic";
+		case e_basicEnd: return "Basic";
 		case e_special: return "Special";
+		case e_specialEnd: return "Special";
 		case e_exotic: return "Exotic";
+		case e_exoticEnd: return "Exotic";
 		default: return "Unknown";
 	}//switch
 
@@ -150,25 +156,29 @@ char *getName (enum e_item item){
 // These must remain in order
 struct t_item itemA [] = {
 	// Basic
+	{e_basic, 		-1, -1, -1},
 	{e_food, 		 .125, 0, 1},
 	{e_wood, 		.100, 1, 1},
 	{e_wool, 		.071, 0, 0},
-	{e_honey, 		 .25, 0, 0},
 	{e_fur, 			 .20, 0, 0},
-	{e_antlers, 	.05, 0, 0},
-	{e_millStones, .0333, 0, 0},
+	{e_honey, 		 .25, 0, 0},
+	{e_basicEnd, 		-1, -1, -1},
 	// not used
+		{e_antlers, 	.05, 0, 0},
+		{e_millStones, .0333, 0, 0},
 		{e_leather, -1, 0, 0},
 		{e_clothes, -1, 0, 0},
 
 	// Special
+	{e_special, 		-1, -1, -1},
 	{e_silver, 	1.00, 1, 1},
-	{e_cow, 		4.00, 1, 0},
 	{e_sheep, 	2.00, 1, 0},
 	{e_weapon, 	1.00, 0, 0},
 	{e_iron, 	0.50, 0, 0},
 	{e_s_jewelry, 3.00, 0, 0},
+	{e_specialEnd, 		-1, -1, -1},
 	// not used
+		{e_cow, 		4.00, 1, 0},
 		{e_l_armor, -1, 1, 1},
 		{e_shield, -1, 1, 1},
 		{e_gem, -1, 1, 1},
@@ -178,17 +188,16 @@ struct t_item itemA [] = {
 		{e_wine, -1, 1, 1},
 
 	// Exotic
+	{e_exotic, 		-1, -1, -1},
 	{e_silk, 		4, 0, 0},
 	{e_gold, 		10, 0, 0},
 	{e_ivory, 		6, 0, 0},
 	{e_salt, 		2, 0, 0},
+	{e_exoticEnd, 		-1, -1, -1},
 	// not used
 		{e_g_jewelry, 	-1, 0, 0},
 		{e_compass, 	-1, 0, 0},
-		{e_map, 		-1, 0, 0},
-		{e_basic, 		-1, -1, -1},
-		{e_special, 		-1, -1, -1},
-		{e_exotic, 		-1, -1, -1}
+		{e_map, 		-1, 0, 0}
 };
 
 ///////////////////////////////////////
@@ -248,6 +257,7 @@ void selectTrade (struct trade *it, float volitility){
 
 ///////////////////////////////////////
 ///////////////////////////////////////
+/*
 struct trade nearA [] = { 
 };
 
@@ -257,6 +267,7 @@ struct trade mediumA [] = {
 
 struct trade farA [] = { 
 };
+*/
 
 struct s_sack sackNear[] =  {
 { e_food, 1000 }
@@ -630,6 +641,7 @@ void newTerritory (int location) {
     
     printf ("\nMax: %d\n", max);
     
+/*
     switch (location) {
         case 1: 
                 if (max <= 2) {
@@ -637,7 +649,7 @@ void newTerritory (int location) {
                     return;
                     }//if
                 else
-                    doTrade (2, nearA);
+                    ;//doTrade (2, nearA);
             break;
         case 2: 
                 if (max <= 3) {
@@ -656,6 +668,7 @@ void newTerritory (int location) {
                     doTrade (5, farA);
             break;
     }//switch
+*/
     
     
 }//newterritory
@@ -738,8 +751,8 @@ void buildTrade (enum e_item sell, enum e_item buy,
 
 	if (debugF) fprintf (debugF, "  Multi: %3.2f---\n", multi);
 
-	int range = e_s_jewelry - e_silver;
-	enum e_item special = rand()%range + e_silver + 1;
+	int range = e_specialEnd - e_special;
+	enum e_item special = rand()%range + e_special + 1;
 
 	// Loop for the number of times 
 	//		First one allows access to "special"
@@ -758,7 +771,7 @@ void buildTrade (enum e_item sell, enum e_item buy,
 		// Check for collisions
 		if (buy == sell){
 			if (debugF) fprintf (debugF, "Match %d %d\n", buy, sell);
-			sell = rand ()%e_millStones ;
+			sell = rand ()%e_basicEnd ;
 			continue;
 		}//skip if perfect match
 
@@ -792,6 +805,10 @@ void buildTrade (enum e_item sell, enum e_item buy,
 		numBuy = (int) (numBuy + .6);
 
 
+		// If you have to have a lot, try again
+		if (factor > 10) continue;
+
+
 		// Set the system and print
 		struct t_trade *trade ;
 		trade = (struct t_trade *) malloc (sizeof (struct t_trade));;
@@ -818,21 +835,22 @@ void buildTrade (enum e_item sell, enum e_item buy,
 
 ///////////////////////////////////////
 enum e_item randBasic() {
-	enum e_item which = rand ()%e_millStones ;
+	int range = e_basicEnd - e_basic - 1;
+	enum e_item which = rand ()%(range) + 1 ;
 	return which;
 }//randbasic
 
 ///////////////////////////////////////
 enum e_item randSpecial() {
-	int range = e_s_jewelry - e_silver;
-	enum e_item special = rand()%range + e_silver + 1;
+	int range = e_specialEnd - e_special - 1;
+	enum e_item special = rand()%range + e_special + 1;
 	return special;
 }//randbasic
 
 ///////////////////////////////////////
 enum e_item randExotic() {
-	int range = e_salt - e_silk + 1;
-	enum e_item exotic = rand()%range + e_silk ;
+	int range = e_exoticEnd - e_exotic  - 1;
+	enum e_item exotic = rand()%range + e_exotic + 1 ;
 	return exotic;
 }//randbasic
 
@@ -1057,6 +1075,22 @@ int main (int argc, char *argv[]){
 	time_t t;
 
 
+	if (debugF) {
+		enum e_item item ;
+		for (i=0; i<20; i++) {
+			item = randBasic();
+			fprintf (debugF, "Basic:  %d %s\n", item, getName(item));
+		}//for
+		for (i=0; i<20; i++) {
+			item = randSpecial();
+			fprintf (debugF, "Special:  %d %s\n", item, getName(item));
+		}//for
+		for (i=0; i<20; i++) {
+			item = randExotic();
+			fprintf (debugF, "Exotic:  %d %s\n", item, getName(item));
+		}//for
+	}//if
+
 	struct t_village *nearV [6];
 	for (i=0; i<6; i++) {
 		nearV [i] = initVillage();
@@ -1129,9 +1163,11 @@ int main (int argc, char *argv[]){
                     break;
 		case 't':
 		case 'T':
+/*
 			if (location == 1) doTrade (2, nearA);
 			if (location == 2) doTrade (3, mediumA);
 			if (location == 3) doTrade (5, farA);
+*/
 			break;
 
 		case 'S':
